@@ -579,27 +579,43 @@ export default function PassbookDetailScreen() {
         <Text style={styles.sectionTitle}>
           Transactions ({filteredTransactions.length})
         </Text>
-        <Pressable
-          onPress={() =>
-            router.push({
-              pathname: '/(app)/transaction-form',
-              params: { passbookId, passbookName, mode: 'create' },
-            })
-          }
-          style={({ pressed }) => [
-            styles.addBtn,
-            pressed && styles.addBtnPressed,
-          ]}
-        >
-          <LinearGradient
-            colors={[AppColors.accentStart, AppColors.accentEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.addBtnGradient}
+        <View style={styles.sectionHeaderButtons}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/generate-report',
+                params: { passbookId, passbookName, businessName },
+              })
+            }
+            style={({ pressed }) => [
+              styles.reportBtn,
+              pressed && styles.reportBtnPressed,
+            ]}
           >
-            <Text style={styles.addBtnText}>+ Add</Text>
-          </LinearGradient>
-        </Pressable>
+            <Text style={styles.reportBtnText}>📄 Report</Text>
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/transaction-form',
+                params: { passbookId, passbookName, mode: 'create' },
+              })
+            }
+            style={({ pressed }) => [
+              styles.addBtn,
+              pressed && styles.addBtnPressed,
+            ]}
+          >
+            <LinearGradient
+              colors={[AppColors.accentStart, AppColors.accentEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.addBtnGradient}
+            >
+              <Text style={styles.addBtnText}>+ Add</Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
       </View>
 
       {/* Search & Filter Trigger Bar */}
@@ -2041,6 +2057,30 @@ const styles = StyleSheet.create({
   sheetApplyText: {
     color: '#FFFFFF',
     fontSize: AppFontSizes.md,
+    fontWeight: '700',
+  },
+  // Section Header Action Buttons
+  sectionHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+  },
+  reportBtn: {
+    height: 36,
+    borderRadius: AppBorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.bgCardBorder,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: AppSpacing.md,
+  },
+  reportBtnPressed: {
+    opacity: 0.7,
+  },
+  reportBtnText: {
+    color: AppColors.textPrimary,
+    fontSize: AppFontSizes.sm,
     fontWeight: '700',
   },
 });

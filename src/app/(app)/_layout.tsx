@@ -44,6 +44,10 @@ export default function AppLayout() {
         name="passbook-detail"
         options={{ animation: 'slide_from_right' }}
       />
+      <Stack.Screen
+        name="generate-report"
+        options={{ animation: 'slide_from_right' }}
+      />
     </Stack>
   );
 }
