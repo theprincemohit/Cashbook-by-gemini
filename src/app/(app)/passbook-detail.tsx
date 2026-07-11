@@ -18,6 +18,7 @@ import {
   Text,
   TextInput,
   View,
+  Dimensions,
 } from 'react-native';
 
 import {
@@ -601,135 +602,44 @@ export default function PassbookDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search remarks or contacts..."
-          placeholderTextColor={AppColors.textPlaceholder}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-            <Text style={styles.searchClear}>✕</Text>
-          </Pressable>
-        )}
-      </View>
-
-      {/* Type Filter Badges */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterRow}
-      >
-        {filterOptions.map((opt) => {
-          const isActive = activeFilter === opt.key;
-          return (
-            <Pressable
-              key={opt.key}
-              onPress={() => setActiveFilter(opt.key)}
-              style={({ pressed }) => [
-                styles.filterBadge,
-                isActive && styles.filterBadgeActive,
-                pressed && styles.filterBadgePressed,
-              ]}
-            >
-              {isActive ? (
-                <LinearGradient
-                  colors={[AppColors.accentStart, AppColors.accentEnd]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.filterBadgeGradient}
-                >
-                  <Text style={styles.filterBadgeTextActive}>
-                    {opt.label}
-                  </Text>
-                  <View style={styles.filterCountBadgeActive}>
-                    <Text style={styles.filterCountTextActive}>
-                      {opt.count}
-                    </Text>
-                  </View>
-                </LinearGradient>
-              ) : (
-                <View style={styles.filterBadgeInner}>
-                  <Text style={styles.filterBadgeText}>{opt.label}</Text>
-                  <View style={styles.filterCountBadge}>
-                    <Text style={styles.filterCountText}>{opt.count}</Text>
-                  </View>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* Date Filter Trigger Button */}
+      {/* Search & Filter Trigger Bar */}
       <Pressable
         onPress={() => setDateBottomSheetVisible(true)}
         style={({ pressed }) => [
-          styles.dateFilterTrigger,
-          pressed && styles.dateFilterTriggerPressed,
-          dateFilter !== 'all' && styles.dateFilterTriggerActive,
+          styles.mainFilterTrigger,
+          pressed && styles.mainFilterTriggerPressed,
+          hasActiveFilters && styles.mainFilterTriggerActive,
         ]}
       >
-        <Text
-          style={[
-            styles.dateFilterTriggerText,
-            dateFilter !== 'all' && styles.dateFilterTriggerTextActive,
-          ]}
-        >
-          📅  Date: {
-            dateFilter === 'all' ? 'All Time' :
-              dateFilter === 'today' ? 'Today' :
-                dateFilter === 'week' ? 'This Week' :
-                  dateFilter === 'month' ? 'This Month' :
-                    `Custom (${formatShortDate(customDateFrom)} - ${formatShortDate(customDateTo)})`
-          }
-        </Text>
-        <Text
-          style={[
-            styles.dateFilterTriggerArrow,
-            dateFilter !== 'all' && styles.dateFilterTriggerArrowActive,
-          ]}
-        >
-          ▼
-        </Text>
+        <View style={styles.mainFilterTriggerLeft}>
+          <Text style={styles.mainFilterTriggerIcon}>🔍</Text>
+          <Text
+            style={[
+              styles.mainFilterTriggerText,
+              hasActiveFilters && styles.mainFilterTriggerTextActive,
+            ]}
+          >
+            {hasActiveFilters ? 'Filters Active' : 'Search & Filter Transactions...'}
+          </Text>
+        </View>
+        <View style={styles.mainFilterTriggerRight}>
+          {hasActiveFilters && (
+            <View style={styles.activeFilterCountBadge}>
+              <Text style={styles.activeFilterCountText}>
+                {
+                  (searchQuery.trim() ? 1 : 0) +
+                  (activeFilter !== 'all' ? 1 : 0) +
+                  (dateFilter !== 'all' ? 1 : 0) +
+                  (minAmount !== '' || maxAmount !== '' ? 1 : 0)
+                }
+              </Text>
+            </View>
+          )}
+          <Text style={styles.mainFilterTriggerArrow}>⚙️</Text>
+        </View>
       </Pressable>
 
-      {/* Amount Range */}
-      <View style={styles.amountFilterRow}>
-        <View style={styles.amountInputWrapper}>
-          <Text style={styles.amountPrefix}>₹</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={minAmount}
-            onChangeText={setMinAmount}
-            placeholder="Min"
-            placeholderTextColor={AppColors.textPlaceholder}
-            keyboardType="numeric"
-            returnKeyType="done"
-          />
-        </View>
-        <Text style={styles.amountSeparator}>—</Text>
-        <View style={styles.amountInputWrapper}>
-          <Text style={styles.amountPrefix}>₹</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={maxAmount}
-            onChangeText={setMaxAmount}
-            placeholder="Max"
-            placeholderTextColor={AppColors.textPlaceholder}
-            keyboardType="numeric"
-            returnKeyType="done"
-          />
-        </View>
-      </View>
-
-      {/* Clear Filters + Hint */}
+      {/* Hint / Clear Filters */}
       <View style={styles.filterFooter}>
         <Text style={styles.hint}>Tap to edit · Long press to delete</Text>
         {hasActiveFilters && (
@@ -932,123 +842,252 @@ export default function PassbookDetailScreen() {
       onRequestClose={() => setDateBottomSheetVisible(false)}
     >
       <View style={styles.bottomSheetOverlay}>
+        {/* Background tap overlay */}
         <Pressable
-          style={styles.bottomSheetOverlayTap}
+          style={StyleSheet.absoluteFill}
           onPress={() => setDateBottomSheetVisible(false)}
         />
-        <View style={styles.bottomSheetCard}>
-          {/* Drag indicator */}
-          <View style={styles.bottomSheetHandle} />
-
-          <Text style={styles.bottomSheetTitle}>Filter by Date</Text>
-          <Text style={styles.bottomSheetSubtitle}>Select a date range to filter transactions</Text>
-
-          <View style={styles.dateOptionsList}>
-            {dateOptions.map((opt) => {
-              const isActive = dateFilter === opt.key;
-              return (
-                <Pressable
-                  key={opt.key}
-                  onPress={() => {
-                    setDateFilter(opt.key);
-                    if (opt.key !== 'custom') {
-                      setDateBottomSheetVisible(false);
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.bottomSheetOption,
-                    isActive && styles.bottomSheetOptionActive,
-                    pressed && styles.bottomSheetOptionPressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.bottomSheetOptionText,
-                      isActive && styles.bottomSheetOptionTextActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                  {isActive && <Text style={styles.bottomSheetCheckmark}>✓</Text>}
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Custom Date Range Pickers inside bottom sheet */}
-          {dateFilter === 'custom' && (
-            <View style={[styles.customDateRow, { marginTop: AppSpacing.md, marginBottom: AppSpacing.md }]}>
-              <View style={styles.customDateCol}>
-                <Text style={styles.customDateLabel}>From</Text>
-                {Platform.OS === 'android' ? (
-                  <Pressable
-                    onPress={() => setShowFromPicker(true)}
-                    style={styles.customDateBtn}
-                  >
-                    <Text style={styles.customDateIcon}>📅</Text>
-                    <Text style={styles.customDateText}>
-                      {formatShortDate(customDateFrom)}
-                    </Text>
-                  </Pressable>
-                ) : null}
-                {(showFromPicker || Platform.OS === 'ios') && (
-                  <DateTimePicker
-                    value={customDateFrom}
-                    mode="date"
-                    display="default"
-                    onChange={onFromDateChange}
-                    themeVariant="dark"
-                    textColor="white"
-                  />
-                )}
-              </View>
-              <Text style={styles.customDateSeparator}>→</Text>
-              <View style={styles.customDateCol}>
-                <Text style={styles.customDateLabel}>To</Text>
-                {Platform.OS === 'android' ? (
-                  <Pressable
-                    onPress={() => setShowToPicker(true)}
-                    style={styles.customDateBtn}
-                  >
-                    <Text style={styles.customDateIcon}>📅</Text>
-                    <Text style={styles.customDateText}>
-                      {formatShortDate(customDateTo)}
-                    </Text>
-                  </Pressable>
-                ) : null}
-                {(showToPicker || Platform.OS === 'ios') && (
-                  <DateTimePicker
-                    value={customDateTo}
-                    mode="date"
-                    display="default"
-                    onChange={onToDateChange}
-                    minimumDate={customDateFrom}
-                    themeVariant="dark"
-                    textColor="white"
-                  />
-                )}
-              </View>
+        
+        {/* Card content wrapped in KeyboardAvoidingView */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ width: '100%' }}
+        >
+          <View style={styles.bottomSheetCard}>
+            {/* Drag indicator */}
+            <View style={styles.bottomSheetHandle} />
+            
+            <View style={styles.sheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Search & Filter</Text>
+              <Text style={styles.bottomSheetSubtitle}>Refine transactions in this passbook</Text>
             </View>
-          )}
 
-          {/* Close/Apply button */}
-          <Pressable
-            onPress={() => setDateBottomSheetVisible(false)}
-            style={({ pressed }) => [
-              styles.bottomSheetApplyBtn,
-              pressed && styles.bottomSheetApplyBtnPressed,
-            ]}
-          >
-            <LinearGradient
-              colors={[AppColors.accentStart, AppColors.accentEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.bottomSheetApplyGradient}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.sheetScrollContent}
             >
-              <Text style={styles.bottomSheetApplyText}>Apply Filters</Text>
-            </LinearGradient>
-          </Pressable>
-        </View>
+              {/* 1. Search Query */}
+              <Text style={styles.sheetSectionTitle}>Search Remarks / Contacts</Text>
+              <View style={styles.sheetSearchContainer}>
+                <Text style={styles.sheetSearchIcon}>🔍</Text>
+                <TextInput
+                  style={styles.sheetSearchInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Type keywords..."
+                  placeholderTextColor={AppColors.textPlaceholder}
+                  returnKeyType="done"
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+                    <Text style={styles.sheetSearchClear}>✕</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {/* 2. Transaction Type */}
+              <Text style={styles.sheetSectionTitle}>Transaction Type</Text>
+              <View style={styles.sheetGridRow}>
+                {filterOptions.map((opt) => {
+                  const isActive = activeFilter === opt.key;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => setActiveFilter(opt.key)}
+                      style={({ pressed }) => [
+                        styles.sheetOptionBadge,
+                        isActive && styles.sheetOptionBadgeActive,
+                        pressed && styles.sheetOptionBadgePressed,
+                      ]}
+                    >
+                      {isActive ? (
+                        <LinearGradient
+                          colors={[AppColors.accentStart, AppColors.accentEnd]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.sheetOptionBadgeGradient}
+                        >
+                          <Text style={styles.sheetOptionBadgeTextActive}>
+                            {opt.label}
+                          </Text>
+                          <View style={styles.sheetOptionCountActive}>
+                            <Text style={styles.sheetOptionCountTextActive}>
+                              {opt.count}
+                            </Text>
+                          </View>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.sheetOptionBadgeInner}>
+                          <Text style={styles.sheetOptionBadgeText}>{opt.label}</Text>
+                          <View style={styles.sheetOptionCount}>
+                            <Text style={styles.sheetOptionCountText}>{opt.count}</Text>
+                          </View>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* 3. Date Filter Options */}
+              <Text style={styles.sheetSectionTitle}>Date Duration</Text>
+              <View style={[styles.sheetGridRow, { flexWrap: 'wrap' }]}>
+                {dateOptions.map((opt) => {
+                  const isActive = dateFilter === opt.key;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => setDateFilter(opt.key)}
+                      style={({ pressed }) => [
+                        styles.sheetOptionBadge,
+                        isActive && styles.sheetOptionBadgeActive,
+                        pressed && styles.sheetOptionBadgePressed,
+                        { width: '48%' }, // grid of 2 columns
+                      ]}
+                    >
+                      {isActive ? (
+                        <LinearGradient
+                          colors={[AppColors.accentStart, AppColors.accentEnd]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.sheetOptionBadgeGradient}
+                        >
+                          <Text style={styles.sheetOptionBadgeTextActive}>
+                            {opt.label}
+                          </Text>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.sheetOptionBadgeInner}>
+                          <Text style={styles.sheetOptionBadgeText}>{opt.label}</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Custom Range inline */}
+              {dateFilter === 'custom' && (
+                <View style={styles.sheetCustomDateContainer}>
+                  <View style={styles.customDateCol}>
+                    <Text style={styles.customDateLabel}>From</Text>
+                    {Platform.OS === 'android' ? (
+                      <Pressable
+                        onPress={() => setShowFromPicker(true)}
+                        style={styles.customDateBtn}
+                      >
+                        <Text style={styles.customDateIcon}>📅</Text>
+                        <Text style={styles.customDateText}>
+                          {formatShortDate(customDateFrom)}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                    {(showFromPicker || Platform.OS === 'ios') && (
+                      <DateTimePicker
+                        value={customDateFrom}
+                        mode="date"
+                        display="default"
+                        onChange={onFromDateChange}
+                        themeVariant="dark"
+                        textColor="white"
+                      />
+                    )}
+                  </View>
+                  <Text style={styles.customDateSeparator}>→</Text>
+                  <View style={styles.customDateCol}>
+                    <Text style={styles.customDateLabel}>To</Text>
+                    {Platform.OS === 'android' ? (
+                      <Pressable
+                        onPress={() => setShowToPicker(true)}
+                        style={styles.customDateBtn}
+                      >
+                        <Text style={styles.customDateIcon}>📅</Text>
+                        <Text style={styles.customDateText}>
+                          {formatShortDate(customDateTo)}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                    {(showToPicker || Platform.OS === 'ios') && (
+                      <DateTimePicker
+                        value={customDateTo}
+                        mode="date"
+                        display="default"
+                        onChange={onToDateChange}
+                        minimumDate={customDateFrom}
+                        themeVariant="dark"
+                        textColor="white"
+                      />
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* 4. Amount Range */}
+              <Text style={styles.sheetSectionTitle}>Amount Range (₹)</Text>
+              <View style={styles.sheetAmountRow}>
+                <View style={styles.sheetAmountWrapper}>
+                  <Text style={styles.sheetAmountPrefix}>₹</Text>
+                  <TextInput
+                    style={styles.sheetAmountInput}
+                    value={minAmount}
+                    onChangeText={setMinAmount}
+                    placeholder="Min"
+                    placeholderTextColor={AppColors.textPlaceholder}
+                    keyboardType="numeric"
+                    returnKeyType="done"
+                  />
+                </View>
+                <Text style={styles.sheetAmountSeparator}>—</Text>
+                <View style={styles.sheetAmountWrapper}>
+                  <Text style={styles.sheetAmountPrefix}>₹</Text>
+                  <TextInput
+                    style={styles.sheetAmountInput}
+                    value={maxAmount}
+                    onChangeText={setMaxAmount}
+                    placeholder="Max"
+                    placeholderTextColor={AppColors.textPlaceholder}
+                    keyboardType="numeric"
+                    returnKeyType="done"
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Action Row */}
+            <View style={styles.sheetActionRow}>
+              <Pressable
+                onPress={() => {
+                  clearAllFilters();
+                  setDateBottomSheetVisible(false);
+                }}
+                style={({ pressed }) => [
+                  styles.sheetClearBtn,
+                  pressed && styles.sheetClearBtnPressed,
+                ]}
+              >
+                <Text style={styles.sheetClearText}>Reset All</Text>
+              </Pressable>
+              
+              <Pressable
+                onPress={() => setDateBottomSheetVisible(false)}
+                style={({ pressed }) => [
+                  styles.sheetApplyBtn,
+                  pressed && styles.sheetApplyBtnPressed,
+                ]}
+              >
+                <LinearGradient
+                  colors={[AppColors.accentStart, AppColors.accentEnd]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.sheetApplyGradient}
+                >
+                  <Text style={styles.sheetApplyText}>Apply Filters</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -1692,8 +1731,8 @@ const styles = StyleSheet.create({
     fontSize: AppFontSizes.md,
     marginTop: AppSpacing.md,
   },
-  // Date filter trigger in header
-  dateFilterTrigger: {
+  // Main search & filter trigger in header
+  mainFilterTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1702,33 +1741,56 @@ const styles = StyleSheet.create({
     borderColor: AppColors.bgCardBorder,
     borderRadius: AppBorderRadius.md,
     paddingHorizontal: AppSpacing.md,
-    height: 44,
-    marginBottom: AppSpacing.sm,
+    height: 48,
+    marginBottom: AppSpacing.md,
   },
-  dateFilterTriggerPressed: {
+  mainFilterTriggerPressed: {
     opacity: 0.7,
   },
-  dateFilterTriggerActive: {
+  mainFilterTriggerActive: {
     borderColor: 'rgba(16, 185, 129, 0.3)',
     backgroundColor: 'rgba(16, 185, 129, 0.05)',
   },
-  dateFilterTriggerText: {
+  mainFilterTriggerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+  },
+  mainFilterTriggerIcon: {
+    fontSize: 16,
+    color: AppColors.textMuted,
+  },
+  mainFilterTriggerText: {
     color: AppColors.textSecondary,
     fontSize: AppFontSizes.sm,
     fontWeight: '600',
   },
-  dateFilterTriggerTextActive: {
+  mainFilterTriggerTextActive: {
     color: AppColors.success,
     fontWeight: '700',
   },
-  dateFilterTriggerArrow: {
-    color: AppColors.textMuted,
-    fontSize: 10,
+  mainFilterTriggerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
   },
-  dateFilterTriggerArrowActive: {
-    color: AppColors.success,
+  activeFilterCountBadge: {
+    backgroundColor: AppColors.success,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  // Bottom Sheet
+  activeFilterCountText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  mainFilterTriggerArrow: {
+    fontSize: 16,
+  },
+  // Bottom Sheet General
   bottomSheetOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
@@ -1744,7 +1806,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: AppSpacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 36 : AppSpacing.lg,
+    maxHeight: Dimensions.get('window').height * 0.85,
   },
   bottomSheetHandle: {
     width: 40,
@@ -1752,6 +1814,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignSelf: 'center',
+    marginBottom: AppSpacing.md,
+  },
+  sheetHeader: {
     marginBottom: AppSpacing.md,
   },
   bottomSheetTitle: {
@@ -1763,57 +1828,217 @@ const styles = StyleSheet.create({
   bottomSheetSubtitle: {
     fontSize: AppFontSizes.xs,
     color: AppColors.textSecondary,
-    marginBottom: AppSpacing.md,
   },
-  dateOptionsList: {
-    gap: AppSpacing.xs,
+  sheetScrollContent: {
+    paddingBottom: AppSpacing.lg,
   },
-  bottomSheetOption: {
+  sheetSectionTitle: {
+    fontSize: AppFontSizes.xs,
+    fontWeight: '700',
+    color: AppColors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: AppSpacing.md,
+    marginBottom: AppSpacing.sm,
+  },
+  // Sheet Search Bar
+  sheetSearchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: AppSpacing.md,
+    backgroundColor: AppColors.bgInput,
     borderRadius: AppBorderRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: AppColors.bgCardBorder,
+    paddingHorizontal: AppSpacing.md,
+    height: 44,
+    marginBottom: AppSpacing.sm,
   },
-  bottomSheetOptionActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+  sheetSearchIcon: {
+    fontSize: 14,
+    marginRight: AppSpacing.sm,
   },
-  bottomSheetOptionPressed: {
+  sheetSearchInput: {
+    flex: 1,
+    fontSize: AppFontSizes.sm,
+    color: AppColors.textPrimary,
+    paddingVertical: 0,
+  },
+  sheetSearchClear: {
+    fontSize: 14,
+    color: AppColors.textMuted,
+    paddingLeft: AppSpacing.sm,
+  },
+  // Grid/Row layouts for options inside sheet
+  sheetGridRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: AppSpacing.sm,
+  },
+  sheetOptionBadge: {
+    flex: 1,
+    minWidth: '30%',
+    borderRadius: AppBorderRadius.full,
+    overflow: 'hidden',
+  },
+  sheetOptionBadgeActive: {
+    shadowColor: AppColors.glowAccent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sheetOptionBadgePressed: {
     opacity: 0.7,
   },
-  bottomSheetOptionText: {
-    fontSize: AppFontSizes.sm,
+  sheetOptionBadgeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 8,
+    gap: 6,
+    height: 38,
+  },
+  sheetOptionBadgeInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.bgCard,
+    borderWidth: 1,
+    borderColor: AppColors.bgCardBorder,
+    borderRadius: AppBorderRadius.full,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 8,
+    gap: 6,
+    height: 38,
+  },
+  sheetOptionBadgeTextActive: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.xs,
+    fontWeight: '700',
+  },
+  sheetOptionBadgeText: {
     color: AppColors.textSecondary,
+    fontSize: AppFontSizes.xs,
     fontWeight: '600',
   },
-  bottomSheetOptionTextActive: {
-    color: AppColors.success,
+  sheetOptionCountActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetOptionCountTextActive: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  sheetOptionCount: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetOptionCountText: {
+    color: AppColors.textMuted,
+    fontSize: 10,
     fontWeight: '700',
   },
-  bottomSheetCheckmark: {
-    color: AppColors.success,
-    fontSize: 16,
-    fontWeight: '700',
+  // Custom date container inside sheet
+  sheetCustomDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    padding: AppSpacing.md,
+    borderRadius: AppBorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.bgCardBorder,
+    marginBottom: AppSpacing.sm,
   },
-  bottomSheetApplyBtn: {
+  // Amount Range
+  sheetAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    marginBottom: AppSpacing.md,
+  },
+  sheetAmountWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.bgInput,
+    borderRadius: AppBorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.bgCardBorder,
+    paddingHorizontal: AppSpacing.md,
+    height: 40,
+  },
+  sheetAmountPrefix: {
+    fontSize: AppFontSizes.sm,
+    color: AppColors.textMuted,
+    marginRight: 4,
+    fontWeight: '600',
+  },
+  sheetAmountInput: {
+    flex: 1,
+    fontSize: AppFontSizes.sm,
+    color: AppColors.textPrimary,
+    paddingVertical: 0,
+  },
+  sheetAmountSeparator: {
+    color: AppColors.textMuted,
+    fontSize: AppFontSizes.sm,
+  },
+  // Action Bottom Row
+  sheetActionRow: {
+    flexDirection: 'row',
+    gap: AppSpacing.sm,
+    marginTop: AppSpacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    paddingTop: AppSpacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 0,
+  },
+  sheetClearBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: AppBorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetClearBtnPressed: {
+    opacity: 0.7,
+  },
+  sheetClearText: {
+    color: AppColors.textSecondary,
+    fontSize: AppFontSizes.sm,
+    fontWeight: '600',
+  },
+  sheetApplyBtn: {
+    flex: 2,
     borderRadius: AppBorderRadius.md,
     overflow: 'hidden',
-    marginTop: AppSpacing.lg,
   },
-  bottomSheetApplyBtnPressed: {
+  sheetApplyBtnPressed: {
     opacity: 0.9,
   },
-  bottomSheetApplyGradient: {
+  sheetApplyGradient: {
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bottomSheetApplyText: {
+  sheetApplyText: {
     color: '#FFFFFF',
     fontSize: AppFontSizes.md,
     fontWeight: '700',
