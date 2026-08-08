@@ -24,6 +24,13 @@ interface AuthState {
     email: string,
     password: string
   ) => Promise<{ success: boolean; message?: string }>;
+  verifyOtp: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  resendOtp: (
+    email: string
+  ) => Promise<{ success: boolean; message?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -121,6 +128,57 @@ export function AuthProvider({ children }: PropsWithChildren) {
     []
   );
 
+  const verifyOtp = useCallback(
+    async (
+      email: string,
+      token: string
+    ): Promise<{ success: boolean; message?: string }> => {
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: 'email',
+        });
+        console.log({ email, token, error })
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        // On success, Supabase creates a session automatically
+        // and the onAuthStateChange listener will update state
+        return { success: true };
+      } catch (err) {
+        return {
+          success: false,
+          message: 'An unexpected error occurred. Please try again.',
+        };
+      }
+    },
+    []
+  );
+
+  const resendOtp = useCallback(
+    async (
+      email: string
+    ): Promise<{ success: boolean; message?: string }> => {
+      try {
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email,
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true, message: 'A new OTP has been sent to your email.' };
+      } catch (err) {
+        return {
+          success: false,
+          message: 'Failed to resend OTP. Please try again.',
+        };
+      }
+    },
+    []
+  );
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -130,7 +188,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isLoading, signUp, signIn, signOut }}
+      value={{ user, session, isLoading, signUp, signIn, verifyOtp, resendOtp, signOut }}
     >
       {children}
     </AuthContext.Provider>

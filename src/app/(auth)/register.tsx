@@ -1,27 +1,26 @@
-import { useState, useRef, useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link, router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
+  ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  Animated,
-  ActivityIndicator,
-  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { Link, router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
-import { useAuth } from '@/context/AuthContext';
 import {
-  AppColors,
-  AppSpacing,
   AppBorderRadius,
+  AppColors,
   AppFontSizes,
+  AppSpacing,
 } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
@@ -92,14 +91,11 @@ export default function RegisterScreen() {
     const result = await signUp(email.trim(), password, fullName.trim());
 
     if (result.success) {
-      if (result.message) {
-        // Email verification required
-        Alert.alert('Success', result.message, [
-          { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-        ]);
-      }
-      // If no message, the session was created automatically and AuthContext
-      // will handle the redirect via onAuthStateChange
+      // Navigate to OTP verification screen
+      router.push({
+        pathname: '/(auth)/verify-otp',
+        params: { email: email.trim() },
+      });
     } else {
       setError(result.message || 'Registration failed. Please try again.');
     }
