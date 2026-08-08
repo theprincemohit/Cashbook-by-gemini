@@ -1,26 +1,26 @@
-import { useState, useRef, useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link, router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
+  ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  Animated,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { Link } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
-import { useAuth } from '@/context/AuthContext';
 import {
-  AppColors,
-  AppSpacing,
   AppBorderRadius,
+  AppColors,
   AppFontSizes,
+  AppSpacing,
 } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -65,8 +65,9 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     const result = await signIn(email.trim(), password);
-
-    if (!result.success) {
+    if (result.success) {
+      router.replace('/(app)');
+    } else {
       setError(result.message || 'Sign in failed. Please try again.');
     }
 

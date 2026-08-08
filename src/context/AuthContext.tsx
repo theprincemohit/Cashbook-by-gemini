@@ -109,7 +109,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       password: string
     ): Promise<{ success: boolean; message?: string }> => {
       try {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -139,7 +139,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
           token,
           type: 'email',
         });
-        console.log({ email, token, error })
         if (error) {
           return { success: false, message: error.message };
         }

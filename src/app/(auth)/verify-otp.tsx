@@ -165,9 +165,8 @@ export default function VerifyOtpScreen() {
     const result = await verifyOtp(email, code);
 
     if (result.success) {
-      // Session is created automatically by Supabase on successful OTP verification.
-      // The AuthContext onAuthStateChange listener will update the state,
-      // and the app's index.tsx redirect will navigate to (app).
+      // Redirect to dashboard after successful verification
+      router.replace('/(app)');
     } else {
       setError(result.message || 'Invalid OTP. Please try again.');
       triggerShake();
