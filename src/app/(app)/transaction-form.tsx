@@ -27,7 +27,13 @@ import {
   AppFontSizes,
   AppSpacing,
 } from '@/constants/theme';
-import { createContact, getContacts, type Contact } from '@/lib/contacts';
+import {
+  createContact,
+  deleteContact,
+  getContacts,
+  updateContact,
+  type Contact,
+} from '@/lib/contacts';
 import {
   createTransaction,
   updateTransaction,
@@ -87,6 +93,13 @@ export default function TransactionFormScreen() {
   const [manualContactName, setManualContactName] = useState('');
   const [manualContactPhone, setManualContactPhone] = useState('');
 
+  // Manage Contacts Modal State
+  const [manageContactsModalVisible, setManageContactsModalVisible] = useState(false);
+  const [manageSearchQuery, setManageSearchQuery] = useState('');
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [editContactName, setEditContactName] = useState('');
+  const [editContactPhone, setEditContactPhone] = useState('');
+
   // UI State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +127,6 @@ export default function TransactionFormScreen() {
 
   const loadContacts = async () => {
     const result = await getContacts();
-    console.log("Contacts: ", result)
     if (result.data) {
       setContacts(result.data);
     }
@@ -187,6 +199,59 @@ export default function TransactionFormScreen() {
     }
   };
 
+  const startEditingContact = (contact: Contact) => {
+    setEditingContact(contact);
+    setEditContactName(contact.name);
+    setEditContactPhone(contact.phone || '');
+  };
+
+  const handleSaveEditContact = async () => {
+    if (!editingContact) return;
+    const nameTrimmed = editContactName.trim();
+    if (!nameTrimmed) {
+      Alert.alert('Error', 'Contact name cannot be empty.');
+      return;
+    }
+
+    const result = await updateContact(editingContact.id, nameTrimmed, editContactPhone.trim());
+    if (result.data) {
+      setContacts((prev) =>
+        prev.map((c) => (c.id === editingContact.id ? result.data! : c))
+      );
+      setEditingContact(null);
+    } else if (result.error) {
+      Alert.alert('Error', result.error);
+    }
+  };
+
+  const handleDeleteContact = (contact: Contact) => {
+    Alert.alert(
+      'Delete Contact',
+      `Are you sure you want to delete "${contact.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteContact(contact.id);
+            if (result.error) {
+              Alert.alert('Error', result.error);
+            } else {
+              setContacts((prev) => prev.filter((c) => c.id !== contact.id));
+              if (selectedContactId === contact.id) {
+                setSelectedContactId(null);
+              }
+              if (editingContact?.id === contact.id) {
+                setEditingContact(null);
+              }
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleAddManualContact = async () => {
     const nameToSave = manualContactName.trim() || contactSearchQuery.trim();
     if (!nameToSave) return;
@@ -219,9 +284,6 @@ export default function TransactionFormScreen() {
         ExpoContacts.Fields.Name,
       ]);
       if (!pickedContact) return;
-
-      console.log("pickedContact with details: ", pickedContact);
-      console.log("Phone numbers: ", pickedContact.phoneNumbers);
 
       // Get phone number if available
       const phoneNumber = pickedContact.phoneNumbers?.[0]?.number;
@@ -609,7 +671,16 @@ export default function TransactionFormScreen() {
                 <Text style={styles.modalBackIcon}>←</Text>
               </Pressable>
               <Text style={styles.modalTitleText}>Choose Party</Text>
-              <View style={{ width: 24 }} />
+              <Pressable
+                onPress={() => {
+                  setManageSearchQuery('');
+                  setManageContactsModalVisible(true);
+                }}
+                style={styles.modalBackBtn}
+                hitSlop={10}
+              >
+                <Text style={{ fontSize: 20 }}>⚙️</Text>
+              </Pressable>
             </View>
 
             {/* Search Input Bar */}
@@ -681,7 +752,7 @@ export default function TransactionFormScreen() {
                   const matchesSearch = c.name.toLowerCase().includes(contactSearchQuery.toLowerCase());
                   return !isAlreadyAdded && matchesSearch;
                 });
-                console.log("phonebook", filteredPhone);
+
                 return (
                   <View style={styles.modalSection}>
                     <Text style={styles.modalSectionTitle}>
@@ -770,6 +841,140 @@ export default function TransactionFormScreen() {
                 </Pressable>
               </View>
             )}
+          </SafeAreaView>
+        </Modal>
+
+        {/* Manage Contacts Modal */}
+        <Modal
+          visible={manageContactsModalVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setManageContactsModalVisible(false)}
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            {/* Modal Header */}
+            <View style={styles.modalHeaderRow}>
+              <Pressable
+                onPress={() => setManageContactsModalVisible(false)}
+                style={styles.modalBackBtn}
+                hitSlop={10}
+              >
+                <Text style={styles.modalBackIcon}>←</Text>
+              </Pressable>
+              <Text style={styles.modalTitleText}>Manage Contacts</Text>
+              <View style={{ width: 24 }} />
+            </View>
+
+            {/* Search Bar */}
+            <View style={styles.modalSearchBox}>
+              <Text style={styles.modalSearchIcon}>🔍</Text>
+              <TextInput
+                style={styles.modalSearchInput}
+                placeholder="Search saved contacts..."
+                placeholderTextColor="#6B7280"
+                value={manageSearchQuery}
+                onChangeText={setManageSearchQuery}
+              />
+              {manageSearchQuery.length > 0 && (
+                <Pressable onPress={() => setManageSearchQuery('')}>
+                  <Text style={{ color: '#9CA3AF', fontSize: 16 }}>✕</Text>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Contact Edit Form (when editing) */}
+            {editingContact ? (
+              <View style={[styles.manualInputCard, { position: 'relative', bottom: 0, marginBottom: 16 }]}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '700', marginBottom: 8 }}>
+                  Edit Contact
+                </Text>
+                <View style={styles.manualInputsCol}>
+                  <TextInput
+                    style={styles.manualTextInput}
+                    placeholder="Contact name"
+                    placeholderTextColor="#6B7280"
+                    value={editContactName}
+                    onChangeText={setEditContactName}
+                  />
+                  <TextInput
+                    style={[styles.manualTextInput, { marginTop: 8 }]}
+                    placeholder="Phone number"
+                    placeholderTextColor="#6B7280"
+                    keyboardType="phone-pad"
+                    value={editContactPhone}
+                    onChangeText={setEditContactPhone}
+                  />
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <Pressable
+                    style={[styles.manualSaveBtn, { flex: 1, backgroundColor: '#374151', marginTop: 0 }]}
+                    onPress={() => setEditingContact(null)}
+                  >
+                    <Text style={styles.manualSaveBtnText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.manualSaveBtn, { flex: 1, marginTop: 0 }]}
+                    onPress={handleSaveEditContact}
+                  >
+                    <Text style={styles.manualSaveBtnText}>Save</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Contacts List */}
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={{ paddingBottom: 40 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {(() => {
+                const filtered = contacts.filter((c) =>
+                  c.name.toLowerCase().includes(manageSearchQuery.toLowerCase())
+                );
+
+                if (filtered.length === 0) {
+                  return (
+                    <Text style={styles.emptyContactsText}>
+                      {manageSearchQuery ? 'No matching contacts' : 'No saved contacts yet'}
+                    </Text>
+                  );
+                }
+
+                return filtered.map((item) => {
+                  const initial = item.name.charAt(0).toUpperCase();
+                  return (
+                    <View key={item.id} style={styles.partyItemRow}>
+                      <View style={[styles.avatarCircle, { backgroundColor: '#7C3AED' }]}>
+                        <Text style={styles.avatarText}>{initial}</Text>
+                      </View>
+                      <View style={styles.partyInfoCol}>
+                        <Text style={styles.partyNameText}>{item.name}</Text>
+                        {item.phone ? (
+                          <Text style={styles.partySubText}>{item.phone}</Text>
+                        ) : null}
+                      </View>
+
+                      {/* Action buttons: Edit & Delete */}
+                      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                        <Pressable
+                          onPress={() => startEditingContact(item)}
+                          hitSlop={8}
+                        >
+                          <Text style={{ fontSize: 18 }}>✏️</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleDeleteContact(item)}
+                          hitSlop={8}
+                        >
+                          <Text style={{ fontSize: 18 }}>🗑️</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
+            </ScrollView>
           </SafeAreaView>
         </Modal>
       </SafeAreaView>
