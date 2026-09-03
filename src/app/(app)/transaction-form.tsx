@@ -85,6 +85,7 @@ export default function TransactionFormScreen() {
   const [isLoadingPhoneContacts, setIsLoadingPhoneContacts] = useState(false);
   const [showManualAddInput, setShowManualAddInput] = useState(false);
   const [manualContactName, setManualContactName] = useState('');
+  const [manualContactPhone, setManualContactPhone] = useState('');
 
   // UI State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,6 +124,7 @@ export default function TransactionFormScreen() {
     setContactSearchQuery('');
     setShowManualAddInput(false);
     setManualContactName('');
+    setManualContactPhone('');
     setContactModalVisible(true);
     fetchPhoneContacts();
   };
@@ -161,7 +163,7 @@ export default function TransactionFormScreen() {
     setContactModalVisible(false);
   };
 
-  const handleSelectPhoneContact = async (phoneContactName: string) => {
+  const handleSelectPhoneContact = async (phoneContactName: string, phoneNumber?: string) => {
     if (!phoneContactName.trim()) return;
 
     // Check if already in app contacts
@@ -175,7 +177,7 @@ export default function TransactionFormScreen() {
     }
 
     // Create in database
-    const result = await createContact(phoneContactName.trim());
+    const result = await createContact(phoneContactName.trim(), phoneNumber?.trim());
     if (result.data) {
       setContacts((prev) => [...prev, result.data!]);
       setSelectedContactId(result.data.id);
@@ -189,8 +191,9 @@ export default function TransactionFormScreen() {
     const nameToSave = manualContactName.trim() || contactSearchQuery.trim();
     if (!nameToSave) return;
 
-    await handleSelectPhoneContact(nameToSave);
+    await handleSelectPhoneContact(nameToSave, manualContactPhone.trim());
     setManualContactName('');
+    setManualContactPhone('');
     setShowManualAddInput(false);
   };
 
@@ -243,7 +246,7 @@ export default function TransactionFormScreen() {
         setSelectedContactId(existingContact.id);
       } else {
         // Create a new contact in the app's database
-        const result = await createContact(contactName);
+        const result = await createContact(contactName, phoneNumber);
         if (result.data) {
           setContacts((prev) => [...prev, result.data!]);
           setSelectedContactId(result.data.id);
@@ -658,7 +661,7 @@ export default function TransactionFormScreen() {
                           </View>
                           <View style={styles.partyInfoCol}>
                             <Text style={styles.partyNameText}>{item.name}</Text>
-                            <Text style={styles.partySubText}>Customer</Text>
+                            <Text style={styles.partySubText}>{item.phone}</Text>
                           </View>
                           {isSelected && <Text style={{ color: '#10B981', fontSize: 18 }}>✓</Text>}
                         </Pressable>
@@ -673,7 +676,7 @@ export default function TransactionFormScreen() {
                 const filteredPhone = phoneContacts.filter((c) =>
                   c.name.toLowerCase().includes(contactSearchQuery.toLowerCase())
                 );
-
+                console.log("phonebook", filteredPhone);
                 return (
                   <View style={styles.modalSection}>
                     <Text style={styles.modalSectionTitle}>
@@ -693,7 +696,7 @@ export default function TransactionFormScreen() {
                           <Pressable
                             key={item.id}
                             style={styles.partyItemRow}
-                            onPress={() => handleSelectPhoneContact(item.name)}
+                            onPress={() => handleSelectPhoneContact(item.name, item.phone)}
                           >
                             <View style={[styles.avatarCircle, { backgroundColor: '#EC4899' }]}>
                               <Text style={styles.avatarText}>{initial}</Text>
@@ -716,14 +719,24 @@ export default function TransactionFormScreen() {
             {/* Manual Add Input Box (if open) */}
             {showManualAddInput && (
               <View style={styles.manualInputCard}>
-                <TextInput
-                  style={styles.manualTextInput}
-                  placeholder="Enter party/contact name"
-                  placeholderTextColor="#6B7280"
-                  value={manualContactName}
-                  onChangeText={setManualContactName}
-                  autoFocus
-                />
+                <View style={styles.manualInputsCol}>
+                  <TextInput
+                    style={styles.manualTextInput}
+                    placeholder="Enter party/contact name"
+                    placeholderTextColor="#6B7280"
+                    value={manualContactName}
+                    onChangeText={setManualContactName}
+                    autoFocus
+                  />
+                  <TextInput
+                    style={[styles.manualTextInput, { marginTop: 8 }]}
+                    placeholder="Enter phone number (optional)"
+                    placeholderTextColor="#6B7280"
+                    keyboardType="phone-pad"
+                    value={manualContactPhone}
+                    onChangeText={setManualContactPhone}
+                  />
+                </View>
                 <Pressable
                   style={styles.manualSaveBtn}
                   onPress={handleAddManualContact}
@@ -1083,8 +1096,7 @@ const styles = StyleSheet.create({
     marginVertical: AppSpacing.sm,
   },
   manualInputCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     backgroundColor: '#272738',
     padding: AppSpacing.md,
     marginHorizontal: AppSpacing.lg,
@@ -1094,21 +1106,30 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
+  manualInputsCol: {
+    width: '100%',
+  },
   manualTextInput: {
-    flex: 1,
     color: '#FFFFFF',
     fontSize: AppFontSizes.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 10,
+    borderRadius: AppBorderRadius.sm,
   },
   manualSaveBtn: {
     backgroundColor: '#8B5CF6',
-    paddingHorizontal: AppSpacing.lg,
-    paddingVertical: AppSpacing.sm,
+    width: '100%',
+    paddingVertical: 12,
     borderRadius: AppBorderRadius.sm,
-    marginLeft: AppSpacing.sm,
+    marginTop: AppSpacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   manualSaveBtnText: {
     color: '#FFFFFF',
     fontWeight: '700',
+    fontSize: AppFontSizes.md,
   },
   modalFabContainer: {
     position: 'absolute',

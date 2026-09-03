@@ -4,6 +4,7 @@ export interface Contact {
   id: string;
   user_id: string;
   name: string;
+  phone?: string | null;
   created_at: string;
 }
 
@@ -39,7 +40,8 @@ export async function getContacts(): Promise<{
  * Create a new contact.
  */
 export async function createContact(
-  name: string
+  name: string,
+  phone?: string
 ): Promise<{ data: Contact | null; error: string | null }> {
   const {
     data: { user },
@@ -49,9 +51,17 @@ export async function createContact(
     return { data: null, error: 'Not authenticated' };
   }
 
+  const payload: { name: string; user_id: string; phone?: string } = {
+    name,
+    user_id: user.id,
+  };
+  if (phone) {
+    payload.phone = phone;
+  }
+
   const { data, error } = await supabase
     .from('contacts')
-    .insert({ name, user_id: user.id })
+    .insert(payload)
     .select()
     .single();
 
