@@ -673,9 +673,14 @@ export default function TransactionFormScreen() {
 
               {/* Choose from Phone Contacts */}
               {(() => {
-                const filteredPhone = phoneContacts.filter((c) =>
-                  c.name.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                const existingNamesSet = new Set(
+                  contacts.map((c) => c.name.trim().toLowerCase())
                 );
+                const filteredPhone = phoneContacts.filter((c) => {
+                  const isAlreadyAdded = existingNamesSet.has(c.name.trim().toLowerCase());
+                  const matchesSearch = c.name.toLowerCase().includes(contactSearchQuery.toLowerCase());
+                  return !isAlreadyAdded && matchesSearch;
+                });
                 console.log("phonebook", filteredPhone);
                 return (
                   <View style={styles.modalSection}>
