@@ -1213,18 +1213,26 @@ export default function TransactionFormScreen() {
                     flex: 1,
                     height: 52,
                     borderRadius: 12,
-                    borderWidth: 1.5,
-                    borderColor: '#6366F1',
-                    backgroundColor: pressed ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                    overflow: 'hidden',
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={[AppColors.accentStart, AppColors.accentEnd]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    flex: 1,
                     flexDirection: 'row',
                     justifyContent: 'center',
                     alignItems: 'center',
                     gap: 8,
-                  },
-                ]}
-              >
-                <Text style={{ color: '#818CF8', fontSize: 18 }}>α</Text>
-                <Text style={{ color: '#818CF8', fontSize: 16, fontWeight: '600' }}>Share</Text>
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 18 }}>🔗</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Share</Text>
+                </LinearGradient>
               </Pressable>
 
               <Pressable
@@ -1235,23 +1243,36 @@ export default function TransactionFormScreen() {
                     flex: 1,
                     height: 52,
                     borderRadius: 12,
-                    backgroundColor: '#6366F1',
-                    opacity: pressed ? 0.85 : 1,
+                    overflow: 'hidden',
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={
+                    isDownloading
+                      ? [AppColors.buttonDisabled, AppColors.buttonDisabled]
+                      : [AppColors.accentStart, AppColors.accentEnd]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    flex: 1,
                     flexDirection: 'row',
                     justifyContent: 'center',
                     alignItems: 'center',
                     gap: 8,
-                  },
-                ]}
-              >
-                {isDownloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Text style={{ color: '#FFFFFF', fontSize: 16 }}>↓</Text>
-                    <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Download</Text>
-                  </>
-                )}
+                  }}
+                >
+                  {isDownloading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Text style={{ color: '#FFFFFF', fontSize: 16 }}>↓</Text>
+                      <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Download</Text>
+                    </>
+                  )}
+                </LinearGradient>
               </Pressable>
             </View>
           </SafeAreaView>

@@ -647,7 +647,7 @@ export default function BusinessDetailScreen() {
               ]}
             >
               <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
-                {businessName ?? 'Select Business'}
+                {businessName.slice(0, 10) ?? 'Select Business'}
               </Text>
               <Text style={{ color: '#818CF8', fontSize: 12 }}>▼</Text>
             </Pressable>
