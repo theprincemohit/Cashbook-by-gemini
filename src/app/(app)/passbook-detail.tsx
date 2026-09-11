@@ -23,6 +23,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Pdf from 'react-native-pdf';
 
 import {
   AppBorderRadius,
@@ -198,6 +199,10 @@ export default function PassbookDetailScreen() {
   // Receipt Modal State
   const [fullReceiptUrl, setFullReceiptUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleOpenAttachment = (url: string) => {
+    setFullReceiptUrl(url);
+  };
 
   const handleDownloadReceipt = async (url: string) => {
     try {
@@ -551,10 +556,10 @@ export default function PassbookDetailScreen() {
       index={index}
       onPress={handleEditTxn}
       onLongPress={handleDeleteTxn}
-      onReceiptPress={(url) => setFullReceiptUrl(url)}
+      onReceiptPress={(url) => handleOpenAttachment(url)}
       formatDate={formatDate}
     />
-  ), [handleEditTxn, handleDeleteTxn, formatDate]);
+  ), [handleEditTxn, handleDeleteTxn, handleOpenAttachment, formatDate]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -1248,50 +1253,119 @@ export default function PassbookDetailScreen() {
         transparent={false}
         onRequestClose={() => setFullReceiptUrl(null)}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#121214' }}>
+          {/* Header */}
           <View style={{
             flexDirection: 'row',
-            justifyContent: 'space-between',
             alignItems: 'center',
+            justifyContent: 'center',
             paddingHorizontal: 16,
-            paddingVertical: 12,
-            backgroundColor: '#111827',
+            paddingVertical: 14,
+            backgroundColor: '#121214',
+            position: 'relative',
           }}>
             <Pressable
               onPress={() => setFullReceiptUrl(null)}
-              style={{ padding: 8 }}
+              style={{ position: 'absolute', left: 16, padding: 8 }}
               hitSlop={12}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>✕ Close</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '400' }}>‹</Text>
             </Pressable>
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Receipt View</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Attachment Preview</Text>
+          </View>
+
+          {/* Main Preview Area */}
+          {fullReceiptUrl ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
+              {(() => {
+                const urlLower = fullReceiptUrl.toLowerCase();
+                const isDoc = urlLower.endsWith('.pdf') || urlLower.endsWith('.doc') || urlLower.endsWith('.docx') || urlLower.includes('application/pdf');
+
+                if (isDoc) {
+                  return (
+                    <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#000000' }}>
+                      <Pdf
+                        trustAllCerts={false}
+                        source={{ uri: fullReceiptUrl, cache: true }}
+                        onLoadComplete={(numberOfPages) => {
+                          console.log(`PDF loaded. Total pages: ${numberOfPages}`);
+                        }}
+                        onError={(error) => {
+                          console.log('PDF Error:', error);
+                        }}
+                        style={{ flex: 1, width: Dimensions.get('window').width, height: Dimensions.get('window').height }}
+                      />
+                    </View>
+                  );
+                }
+
+                return (
+                  <Image
+                    source={{ uri: fullReceiptUrl }}
+                    style={{ width: '100%', height: '100%' }}
+                    resizeMode="contain"
+                  />
+                );
+              })()}
+            </View>
+          ) : null}
+
+          {/* Bottom Dual Action Bar (Share & Download) */}
+          <View style={{
+            flexDirection: 'row',
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            backgroundColor: '#121214',
+            gap: 12,
+          }}>
+            <Pressable
+              onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  height: 52,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  borderColor: '#6366F1',
+                  backgroundColor: pressed ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 8,
+                },
+              ]}
+            >
+              <Text style={{ color: '#818CF8', fontSize: 18 }}>α</Text>
+              <Text style={{ color: '#818CF8', fontSize: 16, fontWeight: '600' }}>Share</Text>
+            </Pressable>
+
             <Pressable
               onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
               disabled={isDownloading}
-              style={{
-                backgroundColor: AppColors.accentSolid,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 8,
-              }}
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  height: 52,
+                  borderRadius: 12,
+                  backgroundColor: '#6366F1',
+                  opacity: pressed ? 0.85 : 1,
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 8,
+                },
+              ]}
             >
               {isDownloading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>📥 Save / Share</Text>
+                <>
+                  <Text style={{ color: '#FFFFFF', fontSize: 16 }}>↓</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Download</Text>
+                </>
               )}
             </Pressable>
           </View>
-
-          {fullReceiptUrl ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
-              <Image
-                source={{ uri: fullReceiptUrl }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="contain"
-              />
-            </View>
-          ) : null}
         </SafeAreaView>
       </Modal>
     </LinearGradient>
