@@ -78,7 +78,18 @@ export default function CreatePassbookScreen() {
       return;
     }
 
-    router.back();
+    if (result.data) {
+      router.replace({
+        pathname: '/(app)/passbook-detail',
+        params: {
+          passbookId: result.data.id,
+          passbookName: result.data.name,
+          businessName: businessName ?? '',
+        },
+      });
+    } else {
+      router.back();
+    }
   };
 
   return (

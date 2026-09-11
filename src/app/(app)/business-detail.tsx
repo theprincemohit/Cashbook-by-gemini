@@ -1,8 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
@@ -11,11 +12,14 @@ import {
   Pressable,
   RefreshControl,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   AppBorderRadius,
@@ -23,7 +27,8 @@ import {
   AppFontSizes,
   AppSpacing,
 } from '@/constants/theme';
-import { deleteBusiness, updateBusiness } from '@/lib/businesses';
+import { useAuth } from '@/context/AuthContext';
+import { deleteBusiness, getBusinesses, updateBusiness, type Business } from '@/lib/businesses';
 import { getPassbooks, type Passbook } from '@/lib/passbooks';
 
 interface PassbookItemProps {
@@ -92,13 +97,27 @@ const PassbookItem = memo(({ item, index, onPress, formatDate, colors }: Passboo
 });
 
 export default function BusinessDetailScreen() {
-  const { id, name: initialName } = useLocalSearchParams<{ id: string; name: string }>();
+  const { id: initialId, name: initialName } = useLocalSearchParams<{ id: string; name: string }>();
+  const { signOut } = useAuth();
 
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: signOut },
+    ]);
+  };
+
+  const [selectedBusinessId, setSelectedBusinessId] = useState(initialId || '');
   const [businessName, setBusinessName] = useState(initialName ?? 'Business');
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  // Businesses list state
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businessBottomSheetVisible, setBusinessBottomSheetVisible] = useState(false);
+  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(false);
 
   // Edit modal state
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -131,9 +150,10 @@ export default function BusinessDetailScreen() {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  const fetchPassbooks = useCallback(async () => {
-    if (!id) return;
-    const result = await getPassbooks(id);
+  const fetchPassbooks = useCallback(async (bId: string) => {
+    if (!bId) return;
+    setIsLoading(true);
+    const result = await getPassbooks(bId);
     if (result.error) {
       setError(result.error);
     } else {
@@ -142,17 +162,44 @@ export default function BusinessDetailScreen() {
     }
     setIsLoading(false);
     setIsRefreshing(false);
-  }, [id]);
+  }, []);
+
+  const loadBusinessesList = useCallback(async () => {
+    setIsLoadingBusinesses(true);
+    const res = await getBusinesses();
+    if (res.data) {
+      setBusinesses(res.data);
+    }
+    setIsLoadingBusinesses(false);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchPassbooks();
-    }, [fetchPassbooks])
+      if (selectedBusinessId) {
+        fetchPassbooks(selectedBusinessId);
+      }
+      loadBusinessesList();
+    }, [selectedBusinessId, fetchPassbooks, loadBusinessesList])
   );
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    fetchPassbooks();
+    if (selectedBusinessId) {
+      fetchPassbooks(selectedBusinessId);
+    }
+    loadBusinessesList();
+  };
+
+  const handleSelectBusiness = async (b: Business) => {
+    setSelectedBusinessId(b.id);
+    setBusinessName(b.name);
+    setBusinessBottomSheetVisible(false);
+    try {
+      await AsyncStorage.setItem('last_selected_business_id', b.id);
+    } catch (e) {
+      console.log('Failed to save last selected business id:', e);
+    }
+    fetchPassbooks(b.id);
   };
 
   // ── Edit ──────────────────────────────────────────────────────────────────
@@ -174,12 +221,15 @@ export default function BusinessDetailScreen() {
     }
     setEditLoading(true);
     setEditError('');
-    const result = await updateBusiness(id, trimmed);
+    const result = await updateBusiness(selectedBusinessId, trimmed);
     setEditLoading(false);
     if (result.error) {
       setEditError(result.error);
     } else {
       setBusinessName(trimmed);
+      setBusinesses((prev) =>
+        prev.map((item) => (item.id === selectedBusinessId ? { ...item, name: trimmed } : item))
+      );
       setEditModalVisible(false);
     }
   };
@@ -198,7 +248,7 @@ export default function BusinessDetailScreen() {
     }
     setDeleteLoading(true);
     setDeleteError('');
-    const result = await deleteBusiness(id);
+    const result = await deleteBusiness(selectedBusinessId);
     setDeleteLoading(false);
     if (result.error) {
       setDeleteError(result.error);
@@ -269,27 +319,6 @@ export default function BusinessDetailScreen() {
 
   const renderHeader = () => (
     <>
-      {/* Business Info Card */}
-      <View style={styles.businessCard}>
-        <LinearGradient
-          colors={[AppColors.accentStart, AppColors.accentEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.businessGradient}
-        >
-          <View style={styles.businessInitialWrapper}>
-            <Text style={styles.businessInitial}>
-              {(businessName ?? 'B').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.businessName}>{businessName ?? 'Business'}</Text>
-          <Text style={styles.businessSubtext}>
-            {passbooks.length}{' '}
-            {passbooks.length === 1 ? 'passbook' : 'passbooks'}
-          </Text>
-        </LinearGradient>
-      </View>
-
       {/* Error */}
       {error ? (
         <View style={styles.errorContainer}>
@@ -304,7 +333,7 @@ export default function BusinessDetailScreen() {
           onPress={() =>
             router.push({
               pathname: '/(app)/create-passbook',
-              params: { businessId: id, businessName: businessName },
+              params: { businessId: selectedBusinessId, businessName: businessName },
             })
           }
           style={({ pressed }) => [
@@ -396,7 +425,7 @@ export default function BusinessDetailScreen() {
                   style={styles.modalConfirmGradient}
                 >
                   {editLoading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     <Text style={styles.modalConfirmText}>Save</Text>
                   )}
@@ -410,9 +439,6 @@ export default function BusinessDetailScreen() {
   );
 
   // ── Delete Modal ──────────────────────────────────────────────────────────
-  const deleteNameMatches =
-    deleteConfirmText.trim() === businessName.trim();
-
   const renderDeleteModal = () => (
     <Modal
       visible={deleteModalVisible}
@@ -429,24 +455,17 @@ export default function BusinessDetailScreen() {
           onPress={() => !deleteLoading && setDeleteModalVisible(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => { }}>
-            <Text style={styles.modalTitle}>🗑️  Delete Business</Text>
+            <Text style={styles.modalTitleTextDelete}>🗑️  Delete Business</Text>
             <Text style={styles.modalSubtitle}>
-              This action is permanent. All passbooks and transactions in this
-              business will be deleted.
+              This action cannot be undone. All passbooks and transactions under this business will be permanently deleted.
             </Text>
-
-            <View style={styles.deleteWarningBox}>
-              <Text style={styles.deleteWarningText}>
-                To confirm, type{' '}
-                <Text style={styles.deleteWarningBold}>{businessName}</Text>
-                {' '}below
-              </Text>
-            </View>
+            <Text style={styles.modalConfirmInstruction}>
+              Type <Text style={styles.modalBoldText}>{businessName}</Text> to confirm:
+            </Text>
 
             <TextInput
               style={[
                 styles.modalInput,
-                styles.modalInputDelete,
                 deleteError ? styles.modalInputError : null,
               ]}
               value={deleteConfirmText}
@@ -454,13 +473,10 @@ export default function BusinessDetailScreen() {
                 setDeleteConfirmText(text);
                 if (deleteError) setDeleteError('');
               }}
-              placeholder={`Type "${businessName}" to delete`}
+              placeholder={businessName}
               placeholderTextColor={AppColors.textPlaceholder}
-              autoFocus
-              editable={!deleteLoading}
               autoCapitalize="none"
-              returnKeyType="done"
-              onSubmitEditing={() => deleteNameMatches && handleDeleteConfirm()}
+              editable={!deleteLoading}
             />
 
             {deleteError ? (
@@ -480,26 +496,116 @@ export default function BusinessDetailScreen() {
               </Pressable>
               <Pressable
                 onPress={handleDeleteConfirm}
-                disabled={deleteLoading || !deleteNameMatches}
+                disabled={
+                  deleteLoading ||
+                  deleteConfirmText.trim() !== businessName.trim()
+                }
                 style={({ pressed }) => [
                   styles.modalDeleteBtn,
                   pressed && styles.modalBtnPressed,
-                  (!deleteNameMatches || deleteLoading) &&
+                  (deleteConfirmText.trim() !== businessName.trim() ||
+                    deleteLoading) &&
                   styles.modalBtnDisabled,
                 ]}
               >
-                <View style={styles.modalDeleteInner}>
-                  {deleteLoading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalDeleteText}>Delete</Text>
-                  )}
-                </View>
+                {deleteLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.modalDeleteBtnText}>Delete</Text>
+                )}
               </Pressable>
             </View>
           </Pressable>
         </Pressable>
       </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  // ── Business List Bottom Sheet Modal ───────────────────────────────────────
+  const renderBusinessBottomSheet = () => (
+    <Modal
+      visible={businessBottomSheetVisible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setBusinessBottomSheetVisible(false)}
+    >
+      <View style={styles.sheetOverlay}>
+        <Pressable
+          style={styles.sheetBackdrop}
+          onPress={() => setBusinessBottomSheetVisible(false)}
+        />
+        <View style={styles.sheetContent}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Select Business</Text>
+
+          {isLoadingBusinesses ? (
+            <ActivityIndicator size="small" color={AppColors.accentSolid} style={{ marginVertical: 20 }} />
+          ) : (
+            <ScrollView style={{ maxHeight: 300, marginVertical: 10 }}>
+              {businesses.map((b) => {
+                const isChecked = b.id === selectedBusinessId;
+                return (
+                  <Pressable
+                    key={b.id}
+                    onPress={() => handleSelectBusiness(b)}
+                    style={({ pressed }) => [
+                      styles.businessRowItem,
+                      pressed && styles.businessRowItemPressed,
+                      isChecked && styles.businessRowItemSelected,
+                    ]}
+                  >
+                    <View style={styles.businessRowLeft}>
+                      <View
+                        style={[
+                          styles.checkboxSquare,
+                          isChecked && styles.checkboxSquareChecked,
+                        ]}
+                      >
+                        {isChecked && <Text style={styles.checkmarkText}>✓</Text>}
+                      </View>
+                      <Text
+                        style={[
+                          styles.businessRowName,
+                          isChecked && styles.businessRowNameSelected,
+                        ]}
+                      >
+                        {b.name}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          <Pressable
+            onPress={() => {
+              setBusinessBottomSheetVisible(false);
+              router.push('/(app)/create-business');
+            }}
+            style={({ pressed }) => [
+              styles.addBusinessBtnInSheet,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <LinearGradient
+              colors={[AppColors.accentStart, AppColors.accentEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.addBusinessBtnGradient}
+            >
+              <Text style={styles.addBusinessBtnText}>+ Add New Business</Text>
+            </LinearGradient>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setBusinessBottomSheetVisible(false)}
+            style={styles.sheetCloseBtn}
+          >
+            <Text style={styles.sheetCloseText}>Close</Text>
+          </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 
@@ -518,19 +624,45 @@ export default function BusinessDetailScreen() {
             },
           ]}
         >
-          {/* Top Bar */}
+          {/* Top Bar with Business Dropdown */}
           <View style={styles.topBar}>
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => {
+                loadBusinessesList();
+                setBusinessBottomSheetVisible(true);
+              }}
               style={({ pressed }) => [
-                styles.backBtn,
-                pressed && styles.backBtnPressed,
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: pressed ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                  paddingHorizontal: AppSpacing.md,
+                  paddingVertical: AppSpacing.xs + 2,
+                  borderRadius: AppBorderRadius.full,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  gap: 6,
+                  maxWidth: '70%',
+                },
               ]}
-              hitSlop={12}
             >
-              <Text style={styles.backText}>← Back</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
+                {businessName ?? 'Select Business'}
+              </Text>
+              <Text style={{ color: '#818CF8', fontSize: 12 }}>▼</Text>
             </Pressable>
+
             <View style={styles.topBarActions}>
+              <Pressable
+                onPress={handleSignOut}
+                style={({ pressed }) => [
+                  styles.topBarIconBtn,
+                  pressed && styles.topBarIconBtnPressed,
+                ]}
+                hitSlop={8}
+              >
+                <Text style={styles.topBarIconText}>🚪</Text>
+              </Pressable>
               <Pressable
                 onPress={openEditModal}
                 style={({ pressed }) => [
@@ -583,6 +715,7 @@ export default function BusinessDetailScreen() {
 
       {renderEditModal()}
       {renderDeleteModal()}
+      {renderBusinessBottomSheet()}
     </LinearGradient>
   );
 }
@@ -935,5 +1068,137 @@ const styles = StyleSheet.create({
   deleteWarningBold: {
     color: AppColors.error,
     fontWeight: '800',
+  },
+
+  // Bottom Sheet Styles
+  sheetOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  sheetContent: {
+    backgroundColor: '#1E1E2A',
+    borderTopLeftRadius: AppBorderRadius.xl,
+    borderTopRightRadius: AppBorderRadius.xl,
+    paddingHorizontal: AppSpacing.lg,
+    paddingTop: AppSpacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 36 : AppSpacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignSelf: 'center',
+    marginBottom: AppSpacing.md,
+  },
+  sheetTitle: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.lg,
+    fontWeight: '700',
+    marginBottom: AppSpacing.md,
+    textAlign: 'center',
+  },
+  businessRowItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: AppBorderRadius.md,
+    marginBottom: 4,
+  },
+  businessRowItemPressed: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  businessRowItemSelected: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+  },
+  businessRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxSquare: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSquareChecked: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  checkmarkText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  businessRowName: {
+    color: '#9CA3AF',
+    fontSize: AppFontSizes.md,
+    fontWeight: '500',
+  },
+  businessRowNameSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  addBusinessBtnInSheet: {
+    marginTop: 8,
+    borderRadius: AppBorderRadius.md,
+    overflow: 'hidden',
+  },
+  addBusinessBtnGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBusinessBtnText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.md,
+    fontWeight: '700',
+  },
+  sheetCloseBtn: {
+    marginTop: 8,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: AppBorderRadius.md,
+    alignItems: 'center',
+  },
+  sheetCloseText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.md,
+    fontWeight: '600',
+  },
+  modalTitleTextDelete: {
+    fontSize: AppFontSizes.lg,
+    fontWeight: '700',
+    color: AppColors.error,
+    marginBottom: AppSpacing.xs,
+  },
+  modalConfirmInstruction: {
+    color: AppColors.textSecondary,
+    fontSize: AppFontSizes.sm,
+    marginBottom: AppSpacing.sm,
+  },
+  modalBoldText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  modalDeleteBtnText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm,
+    fontWeight: '700',
+    paddingHorizontal: AppSpacing.lg,
+    paddingVertical: 10,
+    backgroundColor: AppColors.error,
+    borderRadius: AppBorderRadius.md,
+    overflow: 'hidden',
   },
 });

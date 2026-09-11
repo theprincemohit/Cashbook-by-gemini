@@ -1,27 +1,29 @@
-import { useRef, useEffect, useState, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  Platform,
-  Animated,
-  SafeAreaView,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router, useFocusEffect } from 'expo-router';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import {
+  AppBorderRadius,
+  AppColors,
+  AppFontSizes,
+  AppSpacing,
+} from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getBusinesses, type Business } from '@/lib/businesses';
-import {
-  AppColors,
-  AppSpacing,
-  AppBorderRadius,
-  AppFontSizes,
-} from '@/constants/theme';
 
 interface BusinessItemProps {
   item: Business;
@@ -109,14 +111,35 @@ export default function HomeScreen() {
     if (result.error) {
       setError(result.error);
     } else {
-      setBusinesses(result.data ?? []);
+      const data = result.data ?? [];
+      setBusinesses(data);
       setError('');
+
+      // If user already has at least one business, directly navigate to business-detail
+      if (data.length > 0) {
+        let targetBusiness = data[0];
+        try {
+          const lastSavedId = await AsyncStorage.getItem('last_selected_business_id');
+          if (lastSavedId) {
+            const found = data.find((b) => b.id === lastSavedId);
+            if (found) targetBusiness = found;
+          }
+        } catch (e) {
+          console.log('Error reading last_selected_business_id:', e);
+        }
+
+        router.replace({
+          pathname: '/(app)/business-detail',
+          params: { id: targetBusiness.id, name: targetBusiness.name },
+        });
+        return;
+      }
     }
     setIsLoading(false);
     setIsRefreshing(false);
   }, []);
 
-  // Re-fetch when screen comes into focus (e.g. after creating a business)
+  // Re-fetch when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchBusinesses();
@@ -171,6 +194,22 @@ export default function HomeScreen() {
       <Text style={styles.emptySubtitle}>
         Create your first business to start tracking cash flow
       </Text>
+      <Pressable
+        onPress={() => router.push('/(app)/create-business')}
+        style={({ pressed }) => [
+          styles.addBtn,
+          pressed && styles.addBtnPressed,
+        ]}
+      >
+        <LinearGradient
+          colors={[AppColors.accentStart, AppColors.accentEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.addBtnGradient}
+        >
+          <Text style={styles.addBtnText}>+ Add First Business</Text>
+        </LinearGradient>
+      </Pressable>
     </View>
   );
 
@@ -194,7 +233,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Summary Card */}
-      <View style={styles.summaryCard}>
+      {/* <View style={styles.summaryCard}>
         <LinearGradient
           colors={[AppColors.accentStart, AppColors.accentEnd]}
           start={{ x: 0, y: 0 }}
@@ -211,7 +250,7 @@ export default function HomeScreen() {
                 : 'businesses registered'}
           </Text>
         </LinearGradient>
-      </View>
+      </View> */}
 
       {/* Error */}
       {error ? (
@@ -221,7 +260,7 @@ export default function HomeScreen() {
       ) : null}
 
       {/* Section Header */}
-      <View style={styles.sectionHeader}>
+      {/* <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>My Businesses</Text>
         <Pressable
           onPress={() => router.push('/(app)/create-business')}
@@ -239,7 +278,7 @@ export default function HomeScreen() {
             <Text style={styles.addBtnText}>+ Add New</Text>
           </LinearGradient>
         </Pressable>
-      </View>
+      </View> */}
     </>
   );
 
@@ -401,6 +440,7 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     borderRadius: AppBorderRadius.full,
+    marginTop: 10,
     overflow: 'hidden',
   },
   addBtnPressed: {

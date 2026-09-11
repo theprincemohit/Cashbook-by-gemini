@@ -69,8 +69,17 @@ export default function CreateBusinessScreen() {
       return;
     }
 
-    // Navigate back to the business list
-    router.back();
+    if (result.data) {
+      router.replace({
+        pathname: '/(app)/business-detail',
+        params: {
+          id: result.data.id,
+          name: result.data.name,
+        },
+      });
+    } else {
+      router.back();
+    }
   };
 
   return (
