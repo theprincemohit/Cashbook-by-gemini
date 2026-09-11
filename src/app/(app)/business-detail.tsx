@@ -314,6 +314,28 @@ export default function BusinessDetailScreen() {
       <Text style={styles.emptySubtitle}>
         Create a passbook to start recording transactions for this business
       </Text>
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/(app)/create-passbook',
+            params: { businessId: selectedBusinessId, businessName: businessName },
+          })
+        }
+        style={({ pressed }) => [
+          styles.addBtn,
+          { marginTop: 10 },
+          pressed && styles.addBtnPressed,
+        ]}
+      >
+        <LinearGradient
+          colors={[AppColors.accentStart, AppColors.accentEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.addBtnGradient}
+        >
+          <Text style={styles.addBtnText}>+ Add New Passbook </Text>
+        </LinearGradient>
+      </Pressable>
     </View>
   );
 
