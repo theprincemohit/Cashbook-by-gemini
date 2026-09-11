@@ -1,8 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ExpoContacts from 'expo-contacts/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -75,6 +78,8 @@ export default function TransactionFormScreen() {
   const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(
     params.txnReceiptUrl || null
   );
+  const [fullReceiptUrl, setFullReceiptUrl] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Contacts State
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -321,26 +326,85 @@ export default function TransactionFormScreen() {
     }
   };
 
-  const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission needed',
-        'Sorry, we need camera roll permissions to upload receipts.'
-      );
-      return;
-    }
+  const pickFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'CashDiary needs permission to access your photo gallery to upload receipts.'
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      setReceiptUri(result.assets[0].uri);
-      setExistingReceiptUrl(null); // Clear existing if picking new
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setReceiptUri(result.assets[0].uri);
+        setExistingReceiptUrl(null);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to pick image from gallery.');
     }
+  };
+
+  const pickFromCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'CashDiary needs camera permission to take receipt photos.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setReceiptUri(result.assets[0].uri);
+        setExistingReceiptUrl(null);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to capture photo with camera.');
+    }
+  };
+
+  const pickFromFileManager = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setReceiptUri(result.assets[0].uri);
+        setExistingReceiptUrl(null);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to pick file from file manager.');
+    }
+  };
+
+  const handlePickReceipt = () => {
+    Alert.alert(
+      'Attach Receipt',
+      'Select source to upload receipt',
+      [
+        { text: '🖼️ Choose from Gallery', onPress: pickFromGallery },
+        { text: '📷 Take Photo with Camera', onPress: pickFromCamera },
+        { text: '📁 Browse File Manager', onPress: pickFromFileManager },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -404,6 +468,35 @@ export default function TransactionFormScreen() {
     } catch (err: any) {
       setError(err.message || 'An error occurred while saving.');
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (url: string) => {
+    try {
+      setIsDownloading(true);
+      const filename = `receipt_${Date.now()}.jpg`;
+      const localUri = FileSystem.documentDirectory + filename;
+
+      // If it's already a local URI (file://, content:// or ph://)
+      if (url.startsWith('file://') || url.startsWith('content://') || url.startsWith('ph://')) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(url);
+        } else {
+          Alert.alert('Success', `Receipt stored at: ${url}`);
+        }
+      } else {
+        // Download remote file from URL
+        const downloadRes = await FileSystem.downloadAsync(url, localUri);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadRes.uri);
+        } else {
+          Alert.alert('Saved', `Receipt downloaded to: ${downloadRes.uri}`);
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Download Error', err.message || 'Failed to download receipt.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -591,11 +684,27 @@ export default function TransactionFormScreen() {
                 <Text style={styles.inputLabel}>Receipt (Optional)</Text>
                 {(receiptUri || existingReceiptUrl) ? (
                   <View style={styles.receiptPreviewContainer}>
-                    <Image
-                      source={{ uri: receiptUri || existingReceiptUrl || undefined }}
-                      style={styles.receiptPreview}
-                      resizeMode="cover"
-                    />
+                    <Pressable
+                      onPress={() => setFullReceiptUrl(receiptUri || existingReceiptUrl)}
+                      style={{ width: '100%', height: 160, borderRadius: AppBorderRadius.md, overflow: 'hidden' }}
+                    >
+                      <Image
+                        source={{ uri: receiptUri || existingReceiptUrl || undefined }}
+                        style={styles.receiptPreview}
+                        resizeMode="cover"
+                      />
+                      <View style={{
+                        position: 'absolute',
+                        bottom: 8,
+                        right: 8,
+                        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 6,
+                      }}>
+                        <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>🔍 Tap to View Full</Text>
+                      </View>
+                    </Pressable>
                     <Pressable
                       onPress={() => {
                         setReceiptUri(null);
@@ -608,12 +717,12 @@ export default function TransactionFormScreen() {
                   </View>
                 ) : (
                   <Pressable
-                    onPress={handlePickImage}
+                    onPress={handlePickReceipt}
                     style={styles.receiptUploadBtn}
                   >
-                    <Text style={styles.receiptUploadIcon}>📸</Text>
+                    <Text style={styles.receiptUploadIcon}>📁 / 📸</Text>
                     <Text style={styles.receiptUploadText}>
-                      Tap to attach receipt image
+                      Tap to attach receipt (Gallery, Camera, Files)
                     </Text>
                   </Pressable>
                 )}
@@ -975,6 +1084,60 @@ export default function TransactionFormScreen() {
                 });
               })()}
             </ScrollView>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Full Page Receipt View & Download Modal */}
+        <Modal
+          visible={!!fullReceiptUrl}
+          animationType="fade"
+          transparent={false}
+          onRequestClose={() => setFullReceiptUrl(null)}
+        >
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              backgroundColor: '#111827',
+            }}>
+              <Pressable
+                onPress={() => setFullReceiptUrl(null)}
+                style={{ padding: 8 }}
+                hitSlop={12}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>✕ Close</Text>
+              </Pressable>
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Receipt View</Text>
+              <Pressable
+                onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
+                disabled={isDownloading}
+                style={{
+                  backgroundColor: AppColors.accentSolid,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>📥 Save / Share</Text>
+                )}
+              </Pressable>
+            </View>
+
+            {fullReceiptUrl ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
+                <Image
+                  source={{ uri: fullReceiptUrl }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : null}
           </SafeAreaView>
         </Modal>
       </SafeAreaView>

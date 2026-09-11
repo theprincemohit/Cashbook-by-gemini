@@ -41,6 +41,13 @@
         {
           "contactsPermission": "Allow CashDiary to access your contacts to quickly add contacts to transactions."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CashDiary to access your photos to attach receipt images.",
+          "cameraPermission": "Allow CashDiary to access your camera to take receipt photos."
+        }
       ]
     ],
     "experiments": {

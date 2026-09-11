@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import {
+  Alert,
   View,
   Text,
   Pressable,
@@ -415,7 +416,7 @@ export default function GenerateReportScreen() {
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',
         dialogTitle: `${passbookName} Ledger Report`,
-        uti: 'com.adobe.pdf',
+        UTI: 'com.adobe.pdf',
       });
     } catch (err: any) {
       Alert.alert('Report Generation Failed', err.message || 'An error occurred.');

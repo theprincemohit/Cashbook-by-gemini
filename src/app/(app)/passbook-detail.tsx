@@ -1,12 +1,16 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
+  Dimensions,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -18,7 +22,6 @@ import {
   Text,
   TextInput,
   View,
-  Dimensions,
 } from 'react-native';
 
 import {
@@ -40,6 +43,7 @@ interface TransactionItemProps {
   index: number;
   onPress: (item: Transaction) => void;
   onLongPress: (item: Transaction) => void;
+  onReceiptPress?: (url: string) => void;
   formatDate: (dateStr: string) => string;
 }
 
@@ -48,6 +52,7 @@ const TransactionItem = memo(({
   index,
   onPress,
   onLongPress,
+  onReceiptPress,
   formatDate,
 }: TransactionItemProps) => {
   const isCredit = item.type === 'credit';
@@ -121,7 +126,18 @@ const TransactionItem = memo(({
             {isCredit ? '+' : '-'} ₹{item.amount.toLocaleString('en-IN')}
           </Text>
           {item.receipt_url ? (
-            <Text style={styles.txnReceipt}>📎</Text>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                if (onReceiptPress && item.receipt_url) {
+                  onReceiptPress(item.receipt_url);
+                }
+              }}
+              hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 4 }}
+            >
+              <Text style={styles.txnReceipt}>📎 View</Text>
+            </Pressable>
           ) : null}
         </View>
       </Pressable>
@@ -178,6 +194,37 @@ export default function PassbookDetailScreen() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // Receipt Modal State
+  const [fullReceiptUrl, setFullReceiptUrl] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadReceipt = async (url: string) => {
+    try {
+      setIsDownloading(true);
+      const filename = `receipt_${Date.now()}.jpg`;
+      const localUri = FileSystem.documentDirectory + filename;
+
+      if (url.startsWith('file://') || url.startsWith('content://') || url.startsWith('ph://')) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(url);
+        } else {
+          Alert.alert('Success', `Receipt stored at: ${url}`);
+        }
+      } else {
+        const downloadRes = await FileSystem.downloadAsync(url, localUri);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadRes.uri);
+        } else {
+          Alert.alert('Saved', `Receipt downloaded to: ${downloadRes.uri}`);
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Download Error', err.message || 'Failed to download receipt.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -504,6 +551,7 @@ export default function PassbookDetailScreen() {
       index={index}
       onPress={handleEditTxn}
       onLongPress={handleDeleteTxn}
+      onReceiptPress={(url) => setFullReceiptUrl(url)}
       formatDate={formatDate}
     />
   ), [handleEditTxn, handleDeleteTxn, formatDate]);
@@ -863,7 +911,7 @@ export default function PassbookDetailScreen() {
           style={StyleSheet.absoluteFill}
           onPress={() => setDateBottomSheetVisible(false)}
         />
-        
+
         {/* Card content wrapped in KeyboardAvoidingView */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -872,7 +920,7 @@ export default function PassbookDetailScreen() {
           <View style={styles.bottomSheetCard}>
             {/* Drag indicator */}
             <View style={styles.bottomSheetHandle} />
-            
+
             <View style={styles.sheetHeader}>
               <Text style={styles.bottomSheetTitle}>Search & Filter</Text>
               <Text style={styles.bottomSheetSubtitle}>Refine transactions in this passbook</Text>
@@ -1084,7 +1132,7 @@ export default function PassbookDetailScreen() {
               >
                 <Text style={styles.sheetClearText}>Reset All</Text>
               </Pressable>
-              
+
               <Pressable
                 onPress={() => setDateBottomSheetVisible(false)}
                 style={({ pressed }) => [
@@ -1192,6 +1240,60 @@ export default function PassbookDetailScreen() {
       {renderEditModal()}
       {renderDeleteModal()}
       {renderDateBottomSheet()}
+
+      {/* Full Page Receipt Modal */}
+      <Modal
+        visible={!!fullReceiptUrl}
+        animationType="fade"
+        transparent={false}
+        onRequestClose={() => setFullReceiptUrl(null)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            backgroundColor: '#111827',
+          }}>
+            <Pressable
+              onPress={() => setFullReceiptUrl(null)}
+              style={{ padding: 8 }}
+              hitSlop={12}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>✕ Close</Text>
+            </Pressable>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>Receipt View</Text>
+            <Pressable
+              onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
+              disabled={isDownloading}
+              style={{
+                backgroundColor: AppColors.accentSolid,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 8,
+              }}
+            >
+              {isDownloading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>📥 Save / Share</Text>
+              )}
+            </Pressable>
+          </View>
+
+          {fullReceiptUrl ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
+              <Image
+                source={{ uri: fullReceiptUrl }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
+            </View>
+          ) : null}
+        </SafeAreaView>
+      </Modal>
     </LinearGradient>
   );
 }
