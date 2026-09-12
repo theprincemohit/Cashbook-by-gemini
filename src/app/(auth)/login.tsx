@@ -28,6 +28,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -133,18 +134,20 @@ export default function LoginScreen() {
 
               {/* Email Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
                   <Text style={styles.inputIcon}>✉</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="you@example.com"
+                    placeholder="name@company.com"
                     placeholderTextColor={AppColors.textPlaceholder}
                     value={email}
                     onChangeText={(text) => {
                       setEmail(text);
                       if (error) setError('');
                     }}
+                    onFocus={() => setFocusedInput('email')}
+                    onBlur={() => setFocusedInput(null)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -164,7 +167,7 @@ export default function LoginScreen() {
                     </Pressable>
                   </Link>
                 </View>
-                <View style={styles.inputWrapper}>
+                <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
                   <Text style={styles.inputIcon}>🔒</Text>
                   <TextInput
                     style={[styles.input, styles.passwordInput]}
@@ -175,6 +178,8 @@ export default function LoginScreen() {
                       setPassword(text);
                       if (error) setError('');
                     }}
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoComplete="password"
@@ -385,6 +390,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: AppSpacing.md,
   },
+  inputWrapperFocused: {
+    borderColor: AppColors.accentStart,
+    backgroundColor: 'rgba(16, 185, 129, 0.06)',
+  },
   inputIcon: {
     fontSize: 15,
     marginRight: AppSpacing.sm,
@@ -474,5 +483,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
+  },
+  // Trust Badge
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: AppSpacing.lg,
+    opacity: 0.8,
+  },
+  trustBadgeIcon: {
+    fontSize: 12,
+    marginRight: 6,
+  },
+  trustBadgeText: {
+    fontSize: AppFontSizes.xs,
+    color: AppColors.textMuted,
+    fontWeight: '500',
   },
 });
