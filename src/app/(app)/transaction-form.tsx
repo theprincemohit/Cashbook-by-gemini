@@ -82,6 +82,7 @@ export default function TransactionFormScreen() {
   );
   const [fullReceiptUrl, setFullReceiptUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [receiptPickerModalVisible, setReceiptPickerModalVisible] = useState(false);
 
   // Contacts State
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -329,18 +330,19 @@ export default function TransactionFormScreen() {
   };
 
   const pickFromGallery = async () => {
+    setReceiptPickerModalVisible(false);
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
           'Permission Required',
-          'CashDiary needs permission to access your photo gallery to upload receipts.'
+          'CashDiary needs access to your photos to attach receipts.'
         );
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
       });
@@ -355,6 +357,7 @@ export default function TransactionFormScreen() {
   };
 
   const pickFromCamera = async () => {
+    setReceiptPickerModalVisible(false);
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -380,6 +383,7 @@ export default function TransactionFormScreen() {
   };
 
   const pickFromFileManager = async () => {
+    setReceiptPickerModalVisible(false);
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['image/*', 'application/pdf'],
@@ -396,17 +400,7 @@ export default function TransactionFormScreen() {
   };
 
   const handlePickReceipt = () => {
-    Alert.alert(
-      'Attach Receipt',
-      'Select source to upload receipt',
-      [
-        { text: '🖼️ Choose from Gallery', onPress: pickFromGallery },
-        { text: '📷 Take Photo with Camera', onPress: pickFromCamera },
-        { text: '📁 Browse File Manager', onPress: pickFromFileManager },
-        { text: 'Cancel', style: 'cancel' },
-      ],
-      { cancelable: true }
-    );
+    setReceiptPickerModalVisible(true);
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -767,9 +761,9 @@ export default function TransactionFormScreen() {
                     onPress={handlePickReceipt}
                     style={styles.receiptUploadBtn}
                   >
-                    <Text style={styles.receiptUploadIcon}>📁 / 📸</Text>
+                    <Text style={styles.receiptUploadIcon}>📌</Text>
                     <Text style={styles.receiptUploadText}>
-                      Tap to attach receipt (Gallery, Camera, Files)
+                      Attach receipt (Gallery, Camera, Files)
                     </Text>
                   </Pressable>
                 )}
@@ -1277,6 +1271,196 @@ export default function TransactionFormScreen() {
             </View>
           </SafeAreaView>
         </Modal>
+        {/* Bottom Sheet Modal for Receipt Source Selection */}
+        <Modal
+          visible={receiptPickerModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setReceiptPickerModalVisible(false)}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              justifyContent: 'flex-end',
+            }}
+            onPress={() => setReceiptPickerModalVisible(false)}
+          >
+            <Pressable
+              style={{
+                backgroundColor: '#1E1E2A',
+                borderTopLeftRadius: AppBorderRadius.xl,
+                borderTopRightRadius: AppBorderRadius.xl,
+                paddingHorizontal: AppSpacing.lg,
+                paddingTop: AppSpacing.lg,
+                paddingBottom: Platform.OS === 'ios' ? 40 : AppSpacing.xl,
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              }}
+              onPress={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: AppSpacing.lg,
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: AppFontSizes.md + 1,
+                    fontWeight: '700',
+                  }}
+                >
+                  Attach image and pdf
+                </Text>
+                <Pressable
+                  onPress={() => setReceiptPickerModalVisible(false)}
+                  hitSlop={10}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 15,
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#9CA3AF', fontSize: 16, fontWeight: '700' }}>✕</Text>
+                </Pressable>
+              </View>
+
+              {/* Options */}
+              <View style={{ gap: 10 }}>
+                {/* 1. Take Photo */}
+                <Pressable
+                  onPress={pickFromCamera}
+                  style={({ pressed }) => [
+                    {
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: AppBorderRadius.md,
+                      paddingHorizontal: AppSpacing.md,
+                      paddingVertical: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.08)',
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 14,
+                    }}
+                  >
+                    <Text style={{ fontSize: 20 }}>📷</Text>
+                  </View>
+                  <Text
+                    style={{
+                      color: '#FFFFFF',
+                      fontSize: AppFontSizes.md,
+                      fontWeight: '600',
+                    }}
+                  >
+                    Take photo using camera
+                  </Text>
+                </Pressable>
+
+                {/* 2. Choose from Gallery */}
+                <Pressable
+                  onPress={pickFromGallery}
+                  style={({ pressed }) => [
+                    {
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: AppBorderRadius.md,
+                      paddingHorizontal: AppSpacing.md,
+                      paddingVertical: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.08)',
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 14,
+                    }}
+                  >
+                    <Text style={{ fontSize: 20 }}>🖼️</Text>
+                  </View>
+                  <Text
+                    style={{
+                      color: '#FFFFFF',
+                      fontSize: AppFontSizes.md,
+                      fontWeight: '600',
+                    }}
+                  >
+                    Choose from gallery
+                  </Text>
+                </Pressable>
+
+                {/* 3. Choose PDF / Document */}
+                <Pressable
+                  onPress={pickFromFileManager}
+                  style={({ pressed }) => [
+                    {
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: AppBorderRadius.md,
+                      paddingHorizontal: AppSpacing.md,
+                      paddingVertical: 14,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.08)',
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 14,
+                    }}
+                  >
+                    <Text style={{ fontSize: 20 }}>📄</Text>
+                  </View>
+                  <Text
+                    style={{
+                      color: '#FFFFFF',
+                      fontSize: AppFontSizes.md,
+                      fontWeight: '600',
+                    }}
+                  >
+                    Choose pdf
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -1355,12 +1539,12 @@ const styles = StyleSheet.create({
     color: AppColors.textPrimary,
   },
   // Inputs
-  inputGroup: { marginBottom: AppSpacing.lg },
+  inputGroup: { marginBottom: AppSpacing.md },
   inputLabel: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',
     color: AppColors.textSecondary,
-    marginBottom: AppSpacing.sm,
+    marginBottom: AppSpacing.xs,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -1370,31 +1554,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: AppSpacing.md,
-    minHeight: 56,
+    minHeight: 46,
   },
-  inputIcon: { fontSize: 16, marginRight: AppSpacing.sm },
+  inputIcon: { fontSize: 15, marginRight: AppSpacing.sm },
   input: {
     flex: 1,
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.md,
-    paddingVertical: Platform.OS === 'ios' ? 16 : 14,
+    fontSize: AppFontSizes.sm + 1,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   inputText: {
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
   },
   // Amount
   amountSymbol: {
-    fontSize: AppFontSizes.xl,
+    fontSize: AppFontSizes.lg,
     fontWeight: '700',
     marginRight: AppSpacing.sm,
   },
   amountInput: {
     flex: 1,
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.hero,
+    fontSize: AppFontSizes.xl + 4,
     fontWeight: '800',
-    paddingVertical: Platform.OS === 'ios' ? 16 : 8,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
   },
   // Contacts
   contactsScroll: {
@@ -1440,18 +1624,23 @@ const styles = StyleSheet.create({
   },
   // Receipt
   receiptUploadBtn: {
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderStyle: 'dashed',
-    borderRadius: AppBorderRadius.lg,
-    padding: AppSpacing.xl,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderStyle: 'dashed',
+    borderRadius: AppBorderRadius.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 12,
+    minHeight: 46,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
-  receiptUploadIcon: { fontSize: 32, marginBottom: AppSpacing.sm },
+  receiptUploadIcon: { fontSize: 16, marginRight: 8 },
   receiptUploadText: {
     color: AppColors.textSecondary,
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.sm + 1,
+    fontWeight: '500',
   },
   receiptPreviewContainer: {
     width: '100%',
