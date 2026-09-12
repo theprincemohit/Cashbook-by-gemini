@@ -604,29 +604,39 @@ export default function PassbookDetailScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.summaryGradient}
         >
-          <Text style={styles.summaryPassbookName}>
-            {passbookName ?? 'Passbook'}
-          </Text>
-          {businessName ? (
-            <Text style={styles.summaryBusinessName}>{businessName}</Text>
-          ) : null}
+          <View style={styles.summaryRowsContainer}>
+            {/* 1st row: Net Balance */}
+            <View style={styles.summaryRowItem}>
+              <Text style={styles.summaryRowLabel}>Net Balance</Text>
+              <Text
+                style={[
+                  styles.summaryRowValue,
+                  styles.summaryNetBalanceValue,
+                  balance < 0 ? styles.summaryNetBalanceNegative : null,
+                ]}
+              >
+                {balance < 0
+                  ? `- ₹ ${Math.abs(balance).toLocaleString('en-IN')}`
+                  : `₹ ${balance.toLocaleString('en-IN')}`}
+              </Text>
+            </View>
 
-          <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>
-            ₹ {Math.abs(balance).toLocaleString('en-IN')}
-          </Text>
+            <View style={styles.summaryRowSeparator} />
 
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryItemLabel}>↓ Credit</Text>
-              <Text style={styles.summaryItemValue}>
+            {/* 2nd row: Cash In (+) */}
+            <View style={styles.summaryRowItem}>
+              <Text style={styles.summaryRowLabel}>Cash In (+)</Text>
+              <Text style={[styles.summaryRowValue, styles.summaryCashInValue]}>
                 ₹ {totalCredit.toLocaleString('en-IN')}
               </Text>
             </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryItemLabel}>↑ Debit</Text>
-              <Text style={styles.summaryItemValue}>
+
+            <View style={styles.summaryRowSeparator} />
+
+            {/* 3rd row: Cash Out (-) */}
+            <View style={styles.summaryRowItem}>
+              <Text style={styles.summaryRowLabel}>Cash Out (-)</Text>
+              <Text style={[styles.summaryRowValue, styles.summaryCashOutValue]}>
                 ₹ {totalDebit.toLocaleString('en-IN')}
               </Text>
             </View>
@@ -661,45 +671,31 @@ export default function PassbookDetailScreen() {
           >
             <Text style={styles.reportBtnText}>📄 Report</Text>
           </Pressable>
-        </View>
-      </View>
 
-      {/* Search & Filter Trigger Bar */}
-      <Pressable
-        onPress={() => setDateBottomSheetVisible(true)}
-        style={({ pressed }) => [
-          styles.mainFilterTrigger,
-          pressed && styles.mainFilterTriggerPressed,
-          hasActiveFilters && styles.mainFilterTriggerActive,
-        ]}
-      >
-        <View style={styles.mainFilterTriggerLeft}>
-          <Text style={styles.mainFilterTriggerIcon}>🔍</Text>
-          <Text
-            style={[
-              styles.mainFilterTriggerText,
-              hasActiveFilters && styles.mainFilterTriggerTextActive,
+          <Pressable
+            onPress={() => setDateBottomSheetVisible(true)}
+            style={({ pressed }) => [
+              styles.filterIconBtn,
+              pressed && styles.filterIconBtnPressed,
+              hasActiveFilters && styles.filterIconBtnActive,
             ]}
           >
-            {hasActiveFilters ? 'Filters Active' : 'Search & Filter Transactions...'}
-          </Text>
+            <Text style={styles.filterIconBtnText}>🔍</Text>
+            {hasActiveFilters && (
+              <View style={styles.activeFilterDotBadge}>
+                <Text style={styles.activeFilterDotText}>
+                  {
+                    (searchQuery.trim() ? 1 : 0) +
+                    (activeFilter !== 'all' ? 1 : 0) +
+                    (dateFilter !== 'all' ? 1 : 0) +
+                    (minAmount !== '' || maxAmount !== '' ? 1 : 0)
+                  }
+                </Text>
+              </View>
+            )}
+          </Pressable>
         </View>
-        <View style={styles.mainFilterTriggerRight}>
-          {hasActiveFilters && (
-            <View style={styles.activeFilterCountBadge}>
-              <Text style={styles.activeFilterCountText}>
-                {
-                  (searchQuery.trim() ? 1 : 0) +
-                  (activeFilter !== 'all' ? 1 : 0) +
-                  (dateFilter !== 'all' ? 1 : 0) +
-                  (minAmount !== '' || maxAmount !== '' ? 1 : 0)
-                }
-              </Text>
-            </View>
-          )}
-          <Text style={styles.mainFilterTriggerArrow}>⚙️</Text>
-        </View>
-      </Pressable>
+      </View>
 
       {/* Hint / Clear Filters */}
       <View style={styles.filterFooter}>
@@ -1171,16 +1167,28 @@ export default function PassbookDetailScreen() {
         >
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [
-                styles.backBtn,
-                pressed && styles.backBtnPressed,
-              ]}
-              hitSlop={12}
-            >
-              <Text style={styles.backText}>← Back</Text>
-            </Pressable>
+            <View style={styles.topBarLeft}>
+              <Pressable
+                onPress={() => router.back()}
+                style={({ pressed }) => [
+                  styles.backBtn,
+                  pressed && styles.backBtnPressed,
+                ]}
+                hitSlop={12}
+              >
+                <Text style={styles.backText}>←</Text>
+              </Pressable>
+              <View style={styles.topBarTitleContainer}>
+                <Text style={styles.topBarPassbookName} numberOfLines={1}>
+                  {passbookName ?? 'Passbook'}
+                </Text>
+                {businessName ? (
+                  <Text style={styles.topBarBusinessName} numberOfLines={1}>
+                    {businessName}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
             <View style={styles.topBarActions}>
               <Pressable
                 onPress={openEditModal}
@@ -1487,16 +1495,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.lg,
     marginBottom: AppSpacing.md,
   },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: AppSpacing.sm,
+  },
   backBtn: {
-    paddingVertical: AppSpacing.sm,
-    paddingRight: AppSpacing.md,
-    alignSelf: 'flex-start',
+    paddingVertical: AppSpacing.xs,
+    paddingRight: AppSpacing.xs + 2,
   },
   backBtnPressed: { opacity: 0.6 },
   backText: {
-    fontSize: AppFontSizes.md,
+    fontSize: 22,
     color: AppColors.accentSolid,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  topBarTitleContainer: {
+    flex: 1,
+    marginLeft: 2,
+  },
+  topBarPassbookName: {
+    fontSize: AppFontSizes.md + 1,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  topBarBusinessName: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 1,
   },
   topBarActions: {
     flexDirection: 'row',
@@ -1535,8 +1562,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   summaryGradient: {
-    padding: AppSpacing.lg,
-    alignItems: 'center',
+    padding: AppSpacing.md + 2,
+  },
+  summaryHeaderRow: {
+    marginBottom: AppSpacing.sm + 2,
   },
   summaryPassbookName: {
     fontSize: AppFontSizes.lg,
@@ -1545,31 +1574,50 @@ const styles = StyleSheet.create({
   },
   summaryBusinessName: {
     fontSize: AppFontSizes.xs,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: AppSpacing.md,
+    color: 'rgba(255, 255, 255, 0.65)',
+    marginTop: 2,
   },
-  balanceLabel: {
+  summaryRowsContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    borderRadius: AppBorderRadius.lg,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  summaryRowItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  summaryRowSeparator: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  summaryRowLabel: {
     fontSize: AppFontSizes.sm,
-    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.85)',
   },
-  balanceAmount: {
-    fontSize: AppFontSizes.hero,
+  summaryRowValue: {
+    fontSize: AppFontSizes.md,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  summaryNetBalanceValue: {
+    fontSize: AppFontSizes.lg,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginVertical: AppSpacing.xs,
   },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: AppSpacing.sm,
-    width: '100%',
+  summaryNetBalanceNegative: {
+    color: '#FCA5A5',
   },
-  summaryItem: { flex: 1, alignItems: 'center' },
-  summaryDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  summaryCashInValue: {
+    color: '#34D399',
+  },
+  summaryCashOutValue: {
+    color: '#F87171',
   },
   summaryItemLabel: {
     fontSize: AppFontSizes.xs,
@@ -2349,5 +2397,43 @@ const styles = StyleSheet.create({
     color: AppColors.textPrimary,
     fontSize: AppFontSizes.sm,
     fontWeight: '700',
+  },
+  filterIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: AppBorderRadius.md,
+    borderWidth: 1,
+    borderColor: AppColors.bgCardBorder,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  filterIconBtnPressed: {
+    opacity: 0.7,
+  },
+  filterIconBtnActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  filterIconBtnText: {
+    fontSize: 16,
+  },
+  activeFilterDotBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#EF4444',
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  activeFilterDotText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
   },
 });
