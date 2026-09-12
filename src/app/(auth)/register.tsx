@@ -142,8 +142,10 @@ export default function RegisterScreen() {
                   <Text style={styles.logoIcon}>₹</Text>
                 </LinearGradient>
               </View>
-              <Text style={styles.appName}>CashDiary</Text>
-              <Text style={styles.tagline}>Start tracking your finances</Text>
+              <View style={styles.brandTextContainer}>
+                <Text style={styles.appName}>CashDiary</Text>
+                <Text style={styles.tagline}>Start tracking your finances</Text>
+              </View>
             </View>
 
             {/* Card */}
@@ -294,15 +296,33 @@ export default function RegisterScreen() {
                 </LinearGradient>
               </Pressable>
 
-              {/* Login Link */}
-              <View style={styles.linkContainer}>
-                <Text style={styles.linkText}>Already have an account? </Text>
-                <Link href="/(auth)/login" asChild>
-                  <Pressable>
-                    <Text style={styles.linkAction}>Sign In</Text>
-                  </Pressable>
-                </Link>
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
               </View>
+
+              {/* Secondary Sign In Button with LinearGradient Border */}
+              <Link href="/(auth)/login" asChild>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButtonWrapper,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[AppColors.accentStart, AppColors.accentEnd]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.gradientBorderContainer}
+                  >
+                    <View style={styles.secondaryButtonInner}>
+                      <Text style={styles.secondaryButtonText}>Sign In</Text>
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </Link>
             </View>
           </Animated.View>
         </ScrollView>
@@ -331,11 +351,12 @@ const styles = StyleSheet.create({
   },
   // Branding
   brandSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: AppSpacing.xl,
+    marginBottom: AppSpacing.lg + 2,
   },
   logoContainer: {
-    marginBottom: AppSpacing.md,
+    marginRight: AppSpacing.md,
     shadowColor: AppColors.glowAccent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
@@ -343,27 +364,31 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   logoGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: AppBorderRadius.xl,
+    width: 48,
+    height: 48,
+    borderRadius: AppBorderRadius.md + 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoIcon: {
-    fontSize: 36,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
+  brandTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   appName: {
-    fontSize: AppFontSizes.xxl,
+    fontSize: AppFontSizes.xl + 2,
     fontWeight: '800',
     color: AppColors.textPrimary,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   tagline: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     color: AppColors.textSecondary,
-    marginTop: AppSpacing.xs,
+    marginTop: 1,
   },
   // Card
   card: {
@@ -385,15 +410,15 @@ const styles = StyleSheet.create({
     }),
   },
   cardTitle: {
-    fontSize: AppFontSizes.xl,
+    fontSize: AppFontSizes.lg + 2,
     fontWeight: '700',
     color: AppColors.textPrimary,
-    marginBottom: AppSpacing.xs,
+    marginBottom: 2,
   },
   cardSubtitle: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     color: AppColors.textSecondary,
-    marginBottom: AppSpacing.lg,
+    marginBottom: AppSpacing.md + 4,
   },
   // Error
   errorContainer: {
@@ -410,13 +435,13 @@ const styles = StyleSheet.create({
   },
   // Inputs
   inputGroup: {
-    marginBottom: AppSpacing.md,
+    marginBottom: AppSpacing.sm + 4,
   },
   inputLabel: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',
     color: AppColors.textSecondary,
-    marginBottom: AppSpacing.sm,
+    marginBottom: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -428,14 +453,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.md,
   },
   inputIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: AppSpacing.sm,
   },
   input: {
     flex: 1,
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.md,
-    paddingVertical: Platform.OS === 'ios' ? 16 : 14,
+    fontSize: AppFontSizes.sm + 1,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   passwordInput: {
     paddingRight: 40,
@@ -446,11 +471,11 @@ const styles = StyleSheet.create({
     padding: AppSpacing.xs,
   },
   eyeIcon: {
-    fontSize: 18,
+    fontSize: 16,
   },
-  // Button
+  // Primary Button
   button: {
-    marginTop: AppSpacing.lg,
+    marginTop: AppSpacing.md,
     borderRadius: AppBorderRadius.md,
     overflow: 'hidden',
     shadowColor: AppColors.glowAccent,
@@ -468,29 +493,53 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   buttonGradient: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  // Link
-  linkContainer: {
+  // Divider
+  dividerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: AppSpacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  dividerText: {
+    marginHorizontal: AppSpacing.md,
+    fontSize: AppFontSizes.xs,
+    color: AppColors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  // Secondary Button with Gradient Border
+  secondaryButtonWrapper: {
+    borderRadius: AppBorderRadius.md,
+    overflow: 'hidden',
+  },
+  gradientBorderContainer: {
+    padding: 1.5,
+    borderRadius: AppBorderRadius.md,
+  },
+  secondaryButtonInner: {
+    backgroundColor: '#0E1424',
+    borderRadius: AppBorderRadius.md - 1.5,
+    paddingVertical: 12,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: AppSpacing.lg,
   },
-  linkText: {
-    color: AppColors.textSecondary,
-    fontSize: AppFontSizes.sm,
-  },
-  linkAction: {
-    color: AppColors.accentSolid,
-    fontSize: AppFontSizes.sm,
+  secondaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
   },
 });
