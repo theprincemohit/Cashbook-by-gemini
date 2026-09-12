@@ -1334,7 +1334,7 @@ export default function TransactionFormScreen() {
               </View>
 
               {/* Options */}
-              <View style={{ gap: 10 }}>
+              <View style={{ gap: 8 }}>
                 {/* 1. Take Photo */}
                 <Pressable
                   onPress={pickFromCamera}
@@ -1345,7 +1345,7 @@ export default function TransactionFormScreen() {
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
                       borderRadius: AppBorderRadius.md,
                       paddingHorizontal: AppSpacing.md,
-                      paddingVertical: 14,
+                      paddingVertical: 10,
                       borderWidth: 1,
                       borderColor: 'rgba(255, 255, 255, 0.08)',
                       opacity: pressed ? 0.8 : 1,
@@ -1354,21 +1354,21 @@ export default function TransactionFormScreen() {
                 >
                   <View
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
+                      width: 34,
+                      height: 34,
+                      borderRadius: 8,
                       backgroundColor: 'rgba(16, 185, 129, 0.15)',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginRight: 14,
+                      marginRight: 12,
                     }}
                   >
-                    <Text style={{ fontSize: 20 }}>📷</Text>
+                    <Text style={{ fontSize: 16 }}>📷</Text>
                   </View>
                   <Text
                     style={{
                       color: '#FFFFFF',
-                      fontSize: AppFontSizes.md,
+                      fontSize: AppFontSizes.sm + 1,
                       fontWeight: '600',
                     }}
                   >
@@ -1386,7 +1386,7 @@ export default function TransactionFormScreen() {
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
                       borderRadius: AppBorderRadius.md,
                       paddingHorizontal: AppSpacing.md,
-                      paddingVertical: 14,
+                      paddingVertical: 10,
                       borderWidth: 1,
                       borderColor: 'rgba(255, 255, 255, 0.08)',
                       opacity: pressed ? 0.8 : 1,
@@ -1395,21 +1395,21 @@ export default function TransactionFormScreen() {
                 >
                   <View
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
+                      width: 34,
+                      height: 34,
+                      borderRadius: 8,
                       backgroundColor: 'rgba(59, 130, 246, 0.15)',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginRight: 14,
+                      marginRight: 12,
                     }}
                   >
-                    <Text style={{ fontSize: 20 }}>🖼️</Text>
+                    <Text style={{ fontSize: 16 }}>🖼️</Text>
                   </View>
                   <Text
                     style={{
                       color: '#FFFFFF',
-                      fontSize: AppFontSizes.md,
+                      fontSize: AppFontSizes.sm + 1,
                       fontWeight: '600',
                     }}
                   >
@@ -1427,7 +1427,7 @@ export default function TransactionFormScreen() {
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
                       borderRadius: AppBorderRadius.md,
                       paddingHorizontal: AppSpacing.md,
-                      paddingVertical: 14,
+                      paddingVertical: 10,
                       borderWidth: 1,
                       borderColor: 'rgba(255, 255, 255, 0.08)',
                       opacity: pressed ? 0.8 : 1,
@@ -1436,21 +1436,21 @@ export default function TransactionFormScreen() {
                 >
                   <View
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
+                      width: 34,
+                      height: 34,
+                      borderRadius: 8,
                       backgroundColor: 'rgba(245, 158, 11, 0.15)',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginRight: 14,
+                      marginRight: 12,
                     }}
                   >
-                    <Text style={{ fontSize: 20 }}>📄</Text>
+                    <Text style={{ fontSize: 16 }}>📄</Text>
                   </View>
                   <Text
                     style={{
                       color: '#FFFFFF',
-                      fontSize: AppFontSizes.md,
+                      fontSize: AppFontSizes.sm + 1,
                       fontWeight: '600',
                     }}
                   >
