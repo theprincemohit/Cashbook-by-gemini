@@ -220,15 +220,33 @@ export default function LoginScreen() {
                 </LinearGradient>
               </Pressable>
 
-              {/* Register Link */}
-              <View style={styles.linkContainer}>
-                <Text style={styles.linkText}>Don't have an account? </Text>
-                <Link href="/(auth)/register" asChild>
-                  <Pressable>
-                    <Text style={styles.linkAction}>Sign Up</Text>
-                  </Pressable>
-                </Link>
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
               </View>
+
+              {/* Secondary Sign Up Button with LinearGradient Border */}
+              <Link href="/(auth)/register" asChild>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButtonWrapper,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[AppColors.accentStart, AppColors.accentEnd]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.gradientBorderContainer}
+                  >
+                    <View style={styles.secondaryButtonInner}>
+                      <Text style={styles.secondaryButtonText}>Create New Account</Text>
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </Link>
             </View>
           </Animated.View>
         </ScrollView>
@@ -418,19 +436,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  // Link
-  linkContainer: {
+  // Divider
+  dividerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: AppSpacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  dividerText: {
+    marginHorizontal: AppSpacing.md,
+    fontSize: AppFontSizes.xs,
+    color: AppColors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  // Secondary Button with Gradient Border
+  secondaryButtonWrapper: {
+    borderRadius: AppBorderRadius.md,
+    overflow: 'hidden',
+  },
+  gradientBorderContainer: {
+    padding: 1.5,
+    borderRadius: AppBorderRadius.md,
+  },
+  secondaryButtonInner: {
+    backgroundColor: '#0E1424',
+    borderRadius: AppBorderRadius.md - 1.5,
+    paddingVertical: 12,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: AppSpacing.lg,
   },
-  linkText: {
-    color: AppColors.textSecondary,
-    fontSize: AppFontSizes.sm,
-  },
-  linkAction: {
-    color: AppColors.accentSolid,
-    fontSize: AppFontSizes.sm,
+  secondaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
   },
 });
