@@ -794,7 +794,17 @@ export default function TransactionFormScreen() {
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     <Text style={styles.buttonText}>
-                      {isEdit ? 'Save Changes' : 'Save Transaction'}
+                      {(() => {
+                        const icon = type === 'credit' ? '↓' : '↑';
+                        const label = type === 'credit' ? 'Cash In' : 'Cash Out';
+                        const num = parseFloat(amount);
+                        const formattedAmount = !isNaN(num) && num > 0 ? ` ₹${num.toLocaleString('en-IN')}` : '';
+
+                        if (isEdit) {
+                          return `Save Changes${formattedAmount}`;
+                        }
+                        return `${icon} Save${formattedAmount} (${label})`;
+                      })()}
                     </Text>
                   )}
                 </LinearGradient>
@@ -1517,26 +1527,43 @@ const styles = StyleSheet.create({
   // Type Toggle
   typeToggle: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: AppBorderRadius.md,
     padding: 4,
     marginBottom: AppSpacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   typeBtn: {
     flex: 1,
-    paddingVertical: AppSpacing.md,
+    paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: AppBorderRadius.sm,
+    borderRadius: AppBorderRadius.sm + 2,
   },
-  typeBtnActiveCredit: { backgroundColor: AppColors.successBg },
-  typeBtnActiveDebit: { backgroundColor: AppColors.errorBg },
+  typeBtnActiveCredit: {
+    backgroundColor: '#059669',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  typeBtnActiveDebit: {
+    backgroundColor: '#DC2626',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   typeBtnText: {
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '600',
-    color: AppColors.textSecondary,
+    color: AppColors.textMuted,
   },
   typeBtnTextActive: {
-    color: AppColors.textPrimary,
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   // Inputs
   inputGroup: { marginBottom: AppSpacing.md },
