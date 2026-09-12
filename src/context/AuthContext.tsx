@@ -31,6 +31,16 @@ interface AuthState {
   resendOtp: (
     email: string
   ) => Promise<{ success: boolean; message?: string }>;
+  resetPasswordForEmail: (
+    email: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  verifyRecoveryOtp: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  updatePassword: (
+    newPassword: string
+  ) => Promise<{ success: boolean; message?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -178,6 +188,73 @@ export function AuthProvider({ children }: PropsWithChildren) {
     []
   );
 
+  const resetPasswordForEmail = useCallback(
+    async (
+      email: string
+    ): Promise<{ success: boolean; message?: string }> => {
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true, message: 'An OTP code has been sent to your email.' };
+      } catch (err) {
+        return {
+          success: false,
+          message: 'Failed to send OTP. Please check your email and try again.',
+        };
+      }
+    },
+    []
+  );
+
+  const verifyRecoveryOtp = useCallback(
+    async (
+      email: string,
+      token: string
+    ): Promise<{ success: boolean; message?: string }> => {
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: 'recovery',
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true };
+      } catch (err) {
+        return {
+          success: false,
+          message: 'OTP verification failed. Please try again.',
+        };
+      }
+    },
+    []
+  );
+
+  const updatePassword = useCallback(
+    async (
+      newPassword: string
+    ): Promise<{ success: boolean; message?: string }> => {
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+        if (error) {
+          return { success: false, message: error.message };
+        }
+        return { success: true, message: 'Password updated successfully!' };
+      } catch (err) {
+        return {
+          success: false,
+          message: 'Failed to update password. Please try again.',
+        };
+      }
+    },
+    []
+  );
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -187,7 +264,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isLoading, signUp, signIn, verifyOtp, resendOtp, signOut }}
+      value={{
+        user,
+        session,
+        isLoading,
+        signUp,
+        signIn,
+        verifyOtp,
+        resendOtp,
+        resetPasswordForEmail,
+        verifyRecoveryOtp,
+        updatePassword,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

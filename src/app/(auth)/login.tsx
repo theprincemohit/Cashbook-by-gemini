@@ -154,7 +154,14 @@ export default function LoginScreen() {
 
               {/* Password Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Password</Text>
+                <View style={styles.inputHeaderRow}>
+                  <Text style={styles.inputLabel}>Password</Text>
+                  <Link href="/(auth)/forgot-password" asChild>
+                    <Pressable hitSlop={8}>
+                      <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                    </Pressable>
+                  </Link>
+                </View>
                 <View style={styles.inputWrapper}>
                   <Text style={styles.inputIcon}>🔒</Text>
                   <TextInput
@@ -329,11 +336,21 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: AppSpacing.md,
   },
+  inputHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: AppSpacing.sm,
+  },
   inputLabel: {
     fontSize: AppFontSizes.sm,
     fontWeight: '600',
     color: AppColors.textSecondary,
-    marginBottom: AppSpacing.sm,
+  },
+  forgotPasswordText: {
+    fontSize: AppFontSizes.xs,
+    color: AppColors.accentSolid,
+    fontWeight: '600',
   },
   inputWrapper: {
     flexDirection: 'row',
