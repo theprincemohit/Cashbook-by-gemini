@@ -9,7 +9,6 @@ import {
   Alert,
   Animated,
   Dimensions,
-  FlatList,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -20,10 +19,11 @@ import {
   RefreshControl,
   SafeAreaView,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from 'react-native';
 import Pdf from 'react-native-pdf';
 
@@ -505,6 +505,46 @@ export default function PassbookDetailScreen() {
 
     return result;
   }, [transactions, activeFilter, searchQuery, dateFilter, minAmount, maxAmount, customDateFrom, customDateTo]);
+
+  // Group transactions by date
+  const groupedTransactions = useMemo(() => {
+    if (filteredTransactions.length === 0) return [];
+
+    const formatHeaderDate = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const targetDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (targetDate.getTime() === today.getTime()) {
+        return 'Today';
+      }
+      if (targetDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+      }
+      return d.toLocaleDateString('en-IN', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    };
+
+    const groupsMap: { [key: string]: { title: string; groupTotal: number; data: Transaction[] } } = {};
+    filteredTransactions.forEach((txn) => {
+      const title = formatHeaderDate(txn.date);
+      if (!groupsMap[title]) {
+        groupsMap[title] = { title, groupTotal: 0, data: [] };
+      }
+      groupsMap[title].data.push(txn);
+      const amountVal = txn.type === 'credit' ? txn.amount : -txn.amount;
+      groupsMap[title].groupTotal += amountVal;
+    });
+
+    return Object.values(groupsMap);
+  }, [filteredTransactions]);
 
   const hasActiveFilters =
     activeFilter !== 'all' ||
@@ -1219,15 +1259,38 @@ export default function PassbookDetailScreen() {
               <ActivityIndicator size="large" color={AppColors.accentSolid} />
             </View>
           ) : (
-            <FlatList
-              data={filteredTransactions}
+            <SectionList
+              sections={groupedTransactions}
               keyExtractor={(item) => item.id}
               renderItem={renderTransactionItem}
+              renderSectionHeader={({ section }) => (
+                <View style={styles.dateSectionHeader}>
+                  <View style={styles.dateSectionHeaderBadge}>
+                    <Text style={styles.dateSectionHeaderText}>{section.title}</Text>
+                  </View>
+                  <View style={styles.dateSectionHeaderLine} />
+                  <View style={styles.dateSectionTotalBadge}>
+                    <Text
+                      style={[
+                        styles.dateSectionTotalText,
+                        section.groupTotal < 0
+                          ? styles.dateSectionTotalNegative
+                          : styles.dateSectionTotalPositive,
+                      ]}
+                    >
+                      {section.groupTotal < 0
+                        ? `- ₹${Math.abs(section.groupTotal).toLocaleString('en-IN')}`
+                        : `+ ₹${section.groupTotal.toLocaleString('en-IN')}`}
+                    </Text>
+                  </View>
+                </View>
+              )}
               ListHeaderComponent={renderHeader}
               ListFooterComponent={renderFooter}
               ListEmptyComponent={renderEmptyState}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              stickySectionHeadersEnabled={false}
               onScroll={handleScroll}
               scrollEventThrottle={16}
               onEndReached={handleLoadMore}
@@ -1653,6 +1716,51 @@ const styles = StyleSheet.create({
     fontSize: AppFontSizes.xs,
     color: AppColors.textMuted,
     marginBottom: AppSpacing.md,
+  },
+  // Date Section Header
+  dateSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: AppSpacing.md,
+    marginBottom: AppSpacing.xs + 4,
+  },
+  dateSectionHeaderBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 4,
+    borderRadius: AppBorderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  dateSectionHeaderText: {
+    color: AppColors.textSecondary,
+    fontSize: AppFontSizes.xs + 1,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  dateSectionHeaderLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginHorizontal: AppSpacing.sm,
+  },
+  dateSectionTotalBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    paddingHorizontal: AppSpacing.sm + 2,
+    paddingVertical: 3,
+    borderRadius: AppBorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+  },
+  dateSectionTotalText: {
+    fontSize: AppFontSizes.xs,
+    fontWeight: '700',
+  },
+  dateSectionTotalPositive: {
+    color: '#10B981',
+  },
+  dateSectionTotalNegative: {
+    color: '#EF4444',
   },
   // Transaction Card
   txnCard: {
