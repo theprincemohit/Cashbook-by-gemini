@@ -708,17 +708,22 @@ export default function BusinessDetailScreen() {
                   backgroundColor: pressed ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
                   paddingHorizontal: AppSpacing.md,
                   paddingVertical: AppSpacing.xs + 2,
-                  borderRadius: AppBorderRadius.full,
+                  borderRadius: AppBorderRadius.lg,
                   borderWidth: 1,
                   borderColor: 'rgba(255, 255, 255, 0.15)',
-                  gap: 6,
+                  gap: 8,
                   maxWidth: '70%',
                 },
               ]}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
-                {businessName.slice(0, 10) ?? 'Select Business'}
-              </Text>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
+                  {businessName.slice(0, 10) ?? 'Select Business'}
+                </Text>
+                <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 10, marginTop: 1 }}>
+                  Tap to switch Business
+                </Text>
+              </View>
               <Text style={{ color: '#818CF8', fontSize: 12 }}>▼</Text>
             </Pressable>
 
