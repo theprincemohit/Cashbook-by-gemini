@@ -1238,15 +1238,25 @@ export default function TransactionFormScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{
+                    padding: 1.5,
+                    borderRadius: 12,
                     flex: 1,
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 8,
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 18 }}>🔗</Text>
-                  <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Share</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#1E1E24',
+                      borderRadius: 10.5,
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 18 }}>🔗</Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Share</Text>
+                  </View>
                 </LinearGradient>
               </Pressable>
 
