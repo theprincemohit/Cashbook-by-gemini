@@ -109,10 +109,12 @@ export default function LoginScreen() {
                   <Text style={styles.logoIcon}>₹</Text>
                 </LinearGradient>
               </View>
-              <Text style={styles.appName}>CashDiary</Text>
-              <Text style={styles.tagline}>
-                Your personal cash book companion
-              </Text>
+              <View style={styles.brandTextContainer}>
+                <Text style={styles.appName}>CashDiary</Text>
+                <Text style={styles.tagline}>
+                  Your personal cash book companion
+                </Text>
+              </View>
             </View>
 
             {/* Card */}
@@ -255,39 +257,43 @@ const styles = StyleSheet.create({
   },
   // Branding
   brandSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: AppSpacing.xl,
+    marginBottom: AppSpacing.lg + 2,
   },
   logoContainer: {
-    marginBottom: AppSpacing.md,
+    marginRight: AppSpacing.md,
     shadowColor: AppColors.glowAccent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowRadius: 16,
+    elevation: 8,
   },
   logoGradient: {
-    width: 72,
-    height: 72,
-    borderRadius: AppBorderRadius.xl,
+    width: 56,
+    height: 56,
+    borderRadius: AppBorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoIcon: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  brandTextContainer: {
+    flex: 1,
+  },
   appName: {
-    fontSize: AppFontSizes.xxl,
+    fontSize: AppFontSizes.xl,
     fontWeight: '800',
     color: AppColors.textPrimary,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   tagline: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     color: AppColors.textSecondary,
-    marginTop: AppSpacing.xs,
+    marginTop: 2,
   },
   // Card
   card: {
@@ -334,16 +340,16 @@ const styles = StyleSheet.create({
   },
   // Inputs
   inputGroup: {
-    marginBottom: AppSpacing.md,
+    marginBottom: AppSpacing.sm + 2,
   },
   inputHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: AppSpacing.sm,
+    marginBottom: AppSpacing.xs,
   },
   inputLabel: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',
     color: AppColors.textSecondary,
   },
@@ -362,14 +368,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.md,
   },
   inputIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: AppSpacing.sm,
   },
   input: {
     flex: 1,
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.md,
-    paddingVertical: Platform.OS === 'ios' ? 16 : 14,
+    fontSize: AppFontSizes.sm + 1,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
   },
   passwordInput: {
     paddingRight: 40,
@@ -380,11 +386,11 @@ const styles = StyleSheet.create({
     padding: AppSpacing.xs,
   },
   eyeIcon: {
-    fontSize: 18,
+    fontSize: 16,
   },
   // Button
   button: {
-    marginTop: AppSpacing.lg,
+    marginTop: AppSpacing.md,
     borderRadius: AppBorderRadius.md,
     overflow: 'hidden',
     shadowColor: AppColors.glowAccent,
@@ -402,13 +408,13 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   buttonGradient: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
