@@ -604,7 +604,7 @@ export default function BusinessDetailScreen() {
           {isLoadingBusinesses ? (
             <ActivityIndicator size="small" color={AppColors.accentSolid} style={{ marginVertical: 20 }} />
           ) : (
-            <ScrollView style={{ maxHeight: 300, marginVertical: 10 }}>
+            <ScrollView style={{ maxHeight: 260, marginVertical: 6 }}>
               {businesses.map((b) => {
                 const isChecked = b.id === selectedBusinessId;
                 return (
@@ -659,13 +659,6 @@ export default function BusinessDetailScreen() {
             >
               <Text style={styles.addBusinessBtnText}>+ Add New Business</Text>
             </LinearGradient>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setBusinessBottomSheetVisible(false)}
-            style={styles.sheetCloseBtn}
-          >
-            <Text style={styles.sheetCloseText}>Close</Text>
           </Pressable>
         </View>
       </View>
@@ -1269,14 +1262,14 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     color: '#FFFFFF',
-    fontSize: AppFontSizes.lg,
+    fontSize: AppFontSizes.md,
     fontWeight: '700',
-    marginBottom: AppSpacing.md,
+    marginBottom: AppSpacing.sm,
     textAlign: 'center',
   },
   businessRowItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: AppBorderRadius.md,
     marginBottom: 4,
   },
@@ -1291,12 +1284,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSquare: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginRight: 12,
+    marginRight: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1306,13 +1299,13 @@ const styles = StyleSheet.create({
   },
   checkmarkText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 16,
+    lineHeight: 15,
   },
   businessRowName: {
     color: '#9CA3AF',
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '500',
   },
   businessRowNameSelected: {
@@ -1325,26 +1318,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   addBusinessBtnGradient: {
-    paddingVertical: 14,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBusinessBtnText: {
     color: '#FFFFFF',
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '700',
-  },
-  sheetCloseBtn: {
-    marginTop: 8,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: AppBorderRadius.md,
-    alignItems: 'center',
-  },
-  sheetCloseText: {
-    color: '#FFFFFF',
-    fontSize: AppFontSizes.md,
-    fontWeight: '600',
   },
   modalTitleTextDelete: {
     fontSize: AppFontSizes.lg,
