@@ -30,16 +30,19 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { deleteBusiness, getBusinesses, updateBusiness, type Business } from '@/lib/businesses';
 import { getPassbooks, type Passbook } from '@/lib/passbooks';
+import { getPassbookBalances } from '@/lib/transactions';
 
 interface PassbookItemProps {
   item: Passbook;
   index: number;
+  balance?: number;
+  isLoadingBalance?: boolean;
   onPress: (item: Passbook) => void;
   formatDate: (dateStr: string) => string;
   colors: [string, string];
 }
 
-const PassbookItem = memo(({ item, index, onPress, formatDate, colors }: PassbookItemProps) => {
+const PassbookItem = memo(({ item, index, balance, isLoadingBalance, onPress, formatDate, colors }: PassbookItemProps) => {
   const itemAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -50,6 +53,10 @@ const PassbookItem = memo(({ item, index, onPress, formatDate, colors }: Passboo
       useNativeDriver: true,
     }).start();
   }, [itemAnim, index]);
+
+  const currentBalance = balance ?? 0;
+  const isPositive = currentBalance > 0;
+  const isNegative = currentBalance < 0;
 
   return (
     <Animated.View
@@ -90,6 +97,28 @@ const PassbookItem = memo(({ item, index, onPress, formatDate, colors }: Passboo
             Created {formatDate(item.created_at)}
           </Text>
         </View>
+
+        <View style={styles.passbookBalanceContainer}>
+          {isLoadingBalance ? (
+            <ActivityIndicator size="small" color={AppColors.accentSolid} />
+          ) : (
+            <Text
+              style={[
+                styles.passbookBalanceText,
+                isPositive
+                  ? styles.balancePositive
+                  : isNegative
+                    ? styles.balanceNegative
+                    : styles.balanceZero,
+              ]}
+            >
+              {isNegative
+                ? `- ₹${Math.abs(currentBalance).toLocaleString('en-IN')}`
+                : `₹${currentBalance.toLocaleString('en-IN')}`}
+            </Text>
+          )}
+        </View>
+
         <Text style={styles.passbookArrow}>›</Text>
       </Pressable>
     </Animated.View>
@@ -110,6 +139,8 @@ export default function BusinessDetailScreen() {
   const [selectedBusinessId, setSelectedBusinessId] = useState(initialId || '');
   const [businessName, setBusinessName] = useState(initialName ?? 'Business');
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -157,8 +188,23 @@ export default function BusinessDetailScreen() {
     if (result.error) {
       setError(result.error);
     } else {
-      setPassbooks(result.data ?? []);
+      const data = result.data ?? [];
+      setPassbooks(data);
       setError('');
+      if (data.length > 0) {
+        setIsLoadingBalances(true);
+        const balancesRes = await getPassbookBalances(data.map((p) => p.id));
+        if (balancesRes.data) {
+          const map: Record<string, number> = {};
+          Object.entries(balancesRes.data).forEach(([id, val]) => {
+            map[id] = val.balance;
+          });
+          setBalances(map);
+        }
+        setIsLoadingBalances(false);
+      } else {
+        setBalances({});
+      }
     }
     setIsLoading(false);
     setIsRefreshing(false);
@@ -300,12 +346,14 @@ export default function BusinessDetailScreen() {
       <PassbookItem
         item={item}
         index={index}
+        balance={balances[item.id]}
+        isLoadingBalance={isLoadingBalances}
         onPress={handlePassbookPress}
         formatDate={formatDate}
         colors={colors}
       />
     );
-  }, [handlePassbookPress, formatDate]);
+  }, [handlePassbookPress, formatDate, balances, isLoadingBalances]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -927,6 +975,30 @@ const styles = StyleSheet.create({
   },
   passbookDate: {
     fontSize: AppFontSizes.xs,
+    color: AppColors.textMuted,
+  },
+  passbookBalanceContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: AppSpacing.xs,
+    borderRadius: AppBorderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  passbookBalanceText: {
+    fontSize: AppFontSizes.sm,
+    fontWeight: '700',
+  },
+  balancePositive: {
+    color: '#10B981',
+  },
+  balanceNegative: {
+    color: '#EF4444',
+  },
+  balanceZero: {
     color: AppColors.textMuted,
   },
   passbookArrow: {

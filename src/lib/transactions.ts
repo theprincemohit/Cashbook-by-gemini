@@ -68,7 +68,57 @@ export async function getTransactionTotals(
     }
   }
 
+
   return { data: { total_credit, total_debit }, error: null };
+}
+
+/**
+ * Fetch total credit, total debit, and net balance for a list of passbook IDs.
+ */
+export async function getPassbookBalances(
+  passbookIds: string[]
+): Promise<{
+  data: Record<string, { total_credit: number; total_debit: number; balance: number }> | null;
+  error: string | null;
+}> {
+  if (!passbookIds || passbookIds.length === 0) {
+    return { data: {}, error: null };
+  }
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('passbook_id, type, amount')
+    .in('passbook_id', passbookIds);
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  const result: Record<string, { total_credit: number; total_debit: number; balance: number }> = {};
+
+  for (const id of passbookIds) {
+    result[id] = { total_credit: 0, total_debit: 0, balance: 0 };
+  }
+
+  if (data) {
+    for (const txn of data) {
+      if (!result[txn.passbook_id]) {
+        result[txn.passbook_id] = { total_credit: 0, total_debit: 0, balance: 0 };
+      }
+      const amt = Number(txn.amount) || 0;
+      if (txn.type === 'credit') {
+        result[txn.passbook_id].total_credit += amt;
+      } else if (txn.type === 'debit') {
+        result[txn.passbook_id].total_debit += amt;
+      }
+    }
+
+    for (const id in result) {
+      result[id].balance = result[id].total_credit - result[id].total_debit;
+    }
+  }
+
+  return { data: result, error: null };
 }
 
 /**
