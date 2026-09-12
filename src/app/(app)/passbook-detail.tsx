@@ -13,6 +13,8 @@ import {
   Image,
   KeyboardAvoidingView,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   RefreshControl,
@@ -230,6 +232,18 @@ export default function PassbookDetailScreen() {
       setIsDownloading(false);
     }
   };
+
+  // FAB scroll state
+  const [isFabCollapsed, setIsFabCollapsed] = useState(false);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 30) {
+      setIsFabCollapsed(true);
+    } else {
+      setIsFabCollapsed(false);
+    }
+  }, []);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -646,27 +660,6 @@ export default function PassbookDetailScreen() {
             ]}
           >
             <Text style={styles.reportBtnText}>📄 Report</Text>
-          </Pressable>
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/transaction-form',
-                params: { passbookId, passbookName, mode: 'create' },
-              })
-            }
-            style={({ pressed }) => [
-              styles.addBtn,
-              pressed && styles.addBtnPressed,
-            ]}
-          >
-            <LinearGradient
-              colors={[AppColors.accentStart, AppColors.accentEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.addBtnGradient}
-            >
-              <Text style={styles.addBtnText}>+ Add</Text>
-            </LinearGradient>
           </Pressable>
         </View>
       </View>
@@ -1227,6 +1220,8 @@ export default function PassbookDetailScreen() {
               ListEmptyComponent={renderEmptyState}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.2}
               refreshControl={
@@ -1238,6 +1233,37 @@ export default function PassbookDetailScreen() {
                 />
               }
             />
+          )}
+
+          {/* Floating Action Button (FAB) */}
+          {!isLoading && (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/transaction-form',
+                  params: { passbookId, passbookName, mode: 'create' },
+                })
+              }
+              style={({ pressed }) => [
+                styles.fabContainer,
+                pressed && styles.fabPressed,
+              ]}
+            >
+              <LinearGradient
+                colors={[AppColors.accentStart, AppColors.accentEnd]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.fabGradient,
+                  isFabCollapsed ? styles.fabCollapsed : styles.fabExtended,
+                ]}
+              >
+                <Text style={styles.fabIcon}>+</Text>
+                {!isFabCollapsed && (
+                  <Text style={styles.fabText}>New Entry</Text>
+                )}
+              </LinearGradient>
+            </Pressable>
           )}
         </Animated.View>
       </SafeAreaView>
@@ -1407,7 +1433,51 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: AppSpacing.lg,
-    paddingBottom: AppSpacing.xxl,
+    paddingBottom: 100,
+  },
+  // Floating Action Button (FAB)
+  fabContainer: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    borderRadius: AppBorderRadius.full,
+    shadowColor: AppColors.glowAccent,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 100,
+  },
+  fabPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.96 }],
+  },
+  fabGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: AppBorderRadius.full,
+  },
+  fabExtended: {
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  fabCollapsed: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  fabIcon: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm,
+    fontWeight: '700',
   },
   // Top bar
   topBar: {
