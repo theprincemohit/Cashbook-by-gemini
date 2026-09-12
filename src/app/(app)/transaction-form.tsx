@@ -784,11 +784,22 @@ export default function TransactionFormScreen() {
                   colors={
                     isSubmitting
                       ? [AppColors.buttonDisabled, AppColors.buttonDisabled]
-                      : [AppColors.accentStart, AppColors.accentEnd]
+                      : type === 'credit'
+                      ? ['#059669', '#10B981']
+                      : ['#DC2626', '#EF4444']
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
+                  style={[
+                    styles.buttonGradient,
+                    {
+                      shadowColor: type === 'credit' ? '#10B981' : '#EF4444',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 12,
+                      elevation: 6,
+                    },
+                  ]}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
