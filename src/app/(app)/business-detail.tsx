@@ -916,9 +916,23 @@ export default function BusinessDetailScreen() {
             </Pressable>
           )}
         </Animated.View>
+
+        {/* Custom Bottom Tab Bar */}
+        <View style={styles.bottomTabBar}>
+          <Pressable style={styles.bottomTabItem} onPress={() => {}}>
+            <Feather name="book" size={24} color={AppColors.accentSolid} />
+            <Text style={[styles.bottomTabLabel, { color: AppColors.accentSolid }]}>CashDiary</Text>
+          </Pressable>
+          
+          <Pressable style={styles.bottomTabItem} onPress={() => router.push('/(app)/settings')}>
+            <Feather name="settings" size={24} color="#94A3B8" />
+            <Text style={styles.bottomTabLabel}>Settings</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
 
-      {editModalVisible && renderEditModal()}
+      {/* Full Page Modals */}
+      {renderEditModal()}
       {deleteModalVisible && renderDeleteModal()}
       {businessBottomSheetVisible && renderBusinessBottomSheet()}
     </LinearGradient>
@@ -943,12 +957,12 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: AppSpacing.lg,
-    paddingBottom: 100,
+    paddingBottom: 160,
   },
   // Floating Action Button (FAB)
   fabContainer: {
     position: 'absolute',
-    bottom: 70,
+    bottom: 90,
     right: 20,
     borderRadius: AppBorderRadius.full,
     shadowColor: AppColors.glowAccent,
@@ -1464,5 +1478,33 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.error,
     borderRadius: AppBorderRadius.md,
     overflow: 'hidden',
+  },
+  // Bottom Tab Bar
+  bottomTabBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    backgroundColor: '#0F172A',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 5,
+    zIndex: 1000,
+  },
+  bottomTabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: '100%',
+  },
+  bottomTabLabel: {
+    fontSize: 10,
+    marginTop: 4,
+    color: '#94A3B8',
+    fontWeight: '600',
   },
 });
