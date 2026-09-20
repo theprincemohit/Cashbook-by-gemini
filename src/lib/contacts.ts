@@ -15,9 +15,8 @@ export async function getContacts(): Promise<{
   data: Contact[] | null;
   error: string | null;
 }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { data: null, error: 'Not authenticated' };
@@ -43,9 +42,8 @@ export async function createContact(
   name: string,
   phone?: string
 ): Promise<{ data: Contact | null; error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { data: null, error: 'Not authenticated' };

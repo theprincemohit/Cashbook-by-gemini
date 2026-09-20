@@ -34,9 +34,8 @@ export async function createPassbook(
   businessId: string,
   name: string
 ): Promise<{ data: Passbook | null; error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { data: null, error: 'Not authenticated' };
@@ -62,9 +61,8 @@ export async function updatePassbook(
   passbookId: string,
   name: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { error: 'Not authenticated' };
@@ -89,9 +87,8 @@ export async function updatePassbook(
 export async function deletePassbook(
   passbookId: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { error: 'Not authenticated' };

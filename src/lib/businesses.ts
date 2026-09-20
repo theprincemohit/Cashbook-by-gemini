@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
 
 export interface Business {
@@ -18,9 +19,8 @@ export async function getBusinesses(): Promise<{
   data: Business[] | null;
   error: string | null;
 }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { data: null, error: 'Not authenticated' };
@@ -60,16 +60,15 @@ export async function getBusinesses(): Promise<{
 export async function createBusiness(
   name: string
 ): Promise<{ data: Business | null; error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { data: null, error: 'Not authenticated' };
   }
 
   // Generate a random ID for local creation
-  const tempId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const tempId = Crypto.randomUUID();
   const createdAt = new Date().toISOString();
 
   const localBusiness: Business = {
@@ -94,7 +93,6 @@ export async function createBusiness(
       .single()
       .then(async ({ data, error }) => {
         if (!error && data) {
-          // Update local DB with real Supabase ID and mark synced
           await db.runAsync('DELETE FROM businesses WHERE id = ?', [localBusiness.id]);
           await db.runAsync(
             'INSERT INTO businesses (id, user_id, name, created_at, is_synced) VALUES (?, ?, ?, ?, 1)',
@@ -116,9 +114,8 @@ export async function updateBusiness(
   businessId: string,
   name: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { error: 'Not authenticated' };
@@ -153,9 +150,8 @@ export async function updateBusiness(
 export async function deleteBusiness(
   businessId: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return { error: 'Not authenticated' };
