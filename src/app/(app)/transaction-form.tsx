@@ -25,6 +25,7 @@ import {
   View,
 } from 'react-native';
 import Pdf from 'react-native-pdf';
+import { Feather } from '@expo/vector-icons';
 
 import {
   AppBorderRadius,
@@ -571,14 +572,17 @@ export default function TransactionFormScreen() {
                     type === 'credit' && styles.typeBtnActiveCredit,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      type === 'credit' && styles.typeBtnTextActive,
-                    ]}
-                  >
-                    ↓ Cash In (Credit)
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="arrow-down-left" size={16} color={type === 'credit' ? '#FFFFFF' : AppColors.textMuted} style={{ marginRight: 6 }} />
+                    <Text
+                      style={[
+                        styles.typeBtnText,
+                        type === 'credit' && styles.typeBtnTextActive,
+                      ]}
+                    >
+                      Cash In (Credit)
+                    </Text>
+                  </View>
                 </Pressable>
                 <Pressable
                   onPress={() => setType('debit')}
@@ -587,14 +591,17 @@ export default function TransactionFormScreen() {
                     type === 'debit' && styles.typeBtnActiveDebit,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      type === 'debit' && styles.typeBtnTextActive,
-                    ]}
-                  >
-                    ↑ Cash Out (Debit)
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="arrow-up-right" size={16} color={type === 'debit' ? '#FFFFFF' : AppColors.textMuted} style={{ marginRight: 6 }} />
+                    <Text
+                      style={[
+                        styles.typeBtnText,
+                        type === 'debit' && styles.typeBtnTextActive,
+                      ]}
+                    >
+                      Cash Out (Debit)
+                    </Text>
+                  </View>
                 </Pressable>
               </View>
 
@@ -641,7 +648,7 @@ export default function TransactionFormScreen() {
                     onPress={() => setShowDatePicker(true)}
                     style={styles.inputWrapper}
                   >
-                    <Text style={styles.inputIcon}>📅</Text>
+                    <Feather name="calendar" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
                     <Text style={styles.inputText}>
                       {date.toLocaleDateString('en-IN')}
                     </Text>
@@ -663,7 +670,7 @@ export default function TransactionFormScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Remark / Description</Text>
                 <View style={styles.inputWrapper}>
-                  <Text style={styles.inputIcon}>📝</Text>
+                  <Feather name="edit-2" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
                   <TextInput
                     style={styles.input}
                     placeholder="What was this for?"
@@ -682,13 +689,13 @@ export default function TransactionFormScreen() {
                   onPress={openContactPickerModal}
                   style={styles.inputWrapper}
                 >
-                  <Text style={styles.inputIcon}>👤</Text>
+                  <Feather name="user" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
                   <Text style={styles.inputText}>
                     {selectedContactId
                       ? contacts.find((c) => c.id === selectedContactId)?.name || 'Selected Contact'
                       : 'Select Contact / Party'}
                   </Text>
-                  <Text style={{ marginLeft: 'auto', color: AppColors.textMuted }}>▼</Text>
+                  <Feather name="chevron-down" size={18} color={AppColors.textMuted} style={{ marginLeft: 'auto' }} />
                 </Pressable>
               </View>
 
@@ -761,7 +768,7 @@ export default function TransactionFormScreen() {
                     onPress={handlePickReceipt}
                     style={styles.receiptUploadBtn}
                   >
-                    <Text style={styles.receiptUploadIcon}>📌</Text>
+                    <Feather name="paperclip" size={20} color="#94A3B8" style={{ marginRight: 8 }} />
                     <Text style={styles.receiptUploadText}>
                       Attach receipt (Gallery, Camera, Files)
                     </Text>
@@ -804,19 +811,28 @@ export default function TransactionFormScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
-                    <Text style={styles.buttonText}>
-                      {(() => {
-                        const icon = type === 'credit' ? '↓' : '↑';
-                        const label = type === 'credit' ? 'Cash In' : 'Cash Out';
-                        const num = parseFloat(amount);
-                        const formattedAmount = !isNaN(num) && num > 0 ? ` ₹${num.toLocaleString('en-IN')}` : '';
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {!isEdit && (
+                        <Feather 
+                          name={type === 'credit' ? 'arrow-down-left' : 'arrow-up-right'} 
+                          size={18} 
+                          color="#FFFFFF" 
+                          style={{ marginRight: 6 }} 
+                        />
+                      )}
+                      <Text style={styles.buttonText}>
+                        {(() => {
+                          const label = type === 'credit' ? 'Cash In' : 'Cash Out';
+                          const num = parseFloat(amount);
+                          const formattedAmount = !isNaN(num) && num > 0 ? ` ₹${num.toLocaleString('en-IN')}` : '';
 
-                        if (isEdit) {
-                          return `Save Changes${formattedAmount}`;
-                        }
-                        return `${icon} Save${formattedAmount} (${label})`;
-                      })()}
-                    </Text>
+                          if (isEdit) {
+                            return `Save Changes${formattedAmount}`;
+                          }
+                          return `Save${formattedAmount} (${label})`;
+                        })()}
+                      </Text>
+                    </View>
                   )}
                 </LinearGradient>
               </Pressable>
@@ -1551,7 +1567,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: AppBorderRadius.md,
     padding: 4,
-    marginBottom: AppSpacing.xl,
+    marginBottom: AppSpacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
@@ -1587,7 +1603,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   // Inputs
-  inputGroup: { marginBottom: AppSpacing.md },
+  inputGroup: { marginBottom: AppSpacing.sm + 2 },
   inputLabel: {
     fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',

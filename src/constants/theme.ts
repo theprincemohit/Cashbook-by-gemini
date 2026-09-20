@@ -84,7 +84,7 @@ export const AppColors = {
   textPrimary: '#FFFFFF',
   textSecondary: '#94A3B8',
   textMuted: '#64748B',
-  textPlaceholder: '#475569',
+  textPlaceholder: '#64748B',
 
   // Functional
   error: '#EF4444',
