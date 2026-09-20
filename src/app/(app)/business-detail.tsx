@@ -316,7 +316,8 @@ export default function BusinessDetailScreen() {
       setDeleteError(result.error);
     } else {
       setDeleteModalVisible(false);
-      router.back();
+      const newBusinesses = businesses.filter((b) => b.id !== selectedBusinessId);
+      setSelectedBusinessId(newBusinesses[0]?.id);
     }
   };
 
