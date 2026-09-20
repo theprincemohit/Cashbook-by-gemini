@@ -1031,6 +1031,8 @@ const styles = StyleSheet.create({
   passbookCardPressed: {
     backgroundColor: AppColors.bgInputFocused,
     borderColor: 'rgba(16, 185, 129, 0.25)',
+    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
   },
   passbookIconWrapper: {
     marginRight: AppSpacing.sm + 2,
