@@ -702,7 +702,7 @@ export default function PassbookDetailScreen() {
             <View style={styles.summaryRowItem}>
               <View style={styles.summaryRowLeft}>
                 <View style={styles.summaryIconWrapper}>
-                  <Feather name="credit-card" size={14} color="#FFFFFF" />
+                  <Feather name="credit-card" size={12} color="#FFFFFF" />
                 </View>
                 <Text style={styles.summaryRowLabel}>Net Balance</Text>
               </View>
@@ -719,7 +719,7 @@ export default function PassbookDetailScreen() {
             <View style={styles.summaryRowItem}>
               <View style={styles.summaryRowLeft}>
                 <View style={styles.summaryIconWrapper}>
-                  <Feather name="arrow-up" size={14} color="#FFFFFF" />
+                  <Feather name="arrow-up" size={12} color="#FFFFFF" />
                 </View>
                 <Text style={styles.summaryRowLabel}>Cash In (+)</Text>
               </View>
@@ -734,7 +734,7 @@ export default function PassbookDetailScreen() {
             <View style={styles.summaryRowItem}>
               <View style={styles.summaryRowLeft}>
                 <View style={styles.summaryIconWrapper}>
-                  <Feather name="arrow-down" size={14} color="#FFFFFF" />
+                  <Feather name="arrow-down" size={12} color="#FFFFFF" />
                 </View>
                 <Text style={styles.summaryRowLabel}>Cash Out (-)</Text>
               </View>
@@ -1410,7 +1410,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   summaryGradient: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: AppSpacing.md,
   },
   summaryRowsContainer: {
@@ -1421,37 +1421,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   summaryRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   summaryIconWrapper: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 8,
   },
   summaryRowSeparator: {
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   summaryRowLabel: {
-    fontSize: AppFontSizes.sm,
+    fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',
     color: '#FFFFFF',
   },
   summaryRowValue: {
-    fontSize: AppFontSizes.sm + 1,
+    fontSize: AppFontSizes.sm,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   summaryNetBalanceValue: {
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     fontWeight: '800',
     color: '#FFFFFF',
   },
