@@ -23,6 +23,8 @@ import {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { Feather } from '@expo/vector-icons';
+
 import {
   AppBorderRadius,
   AppColors,
@@ -88,7 +90,7 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, onPress, fo
             end={{ x: 1, y: 1 }}
             style={styles.passbookIconGradient}
           >
-            <Text style={styles.passbookIconText}>📒</Text>
+            <Feather name="book" size={20} color="#FFFFFF" />
           </LinearGradient>
         </View>
         <View style={styles.passbookInfo}>
@@ -371,7 +373,7 @@ export default function BusinessDetailScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>📒</Text>
+      <Feather name="book" size={48} color={AppColors.accentSolid} style={{ marginBottom: 16 }} />
       <Text style={styles.emptyTitle}>No passbooks yet</Text>
       <Text style={styles.emptySubtitle}>
         Create a passbook to start recording transactions for this business
@@ -434,7 +436,10 @@ export default function BusinessDetailScreen() {
           onPress={() => !editLoading && setEditModalVisible(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => { }}>
-            <Text style={styles.modalTitle}>✏️  Rename Business</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Feather name="edit-2" size={22} color="#FFFFFF" />
+              <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Rename Business</Text>
+            </View>
             <Text style={styles.modalSubtitle}>
               Enter a new name for this business
             </Text>
@@ -518,7 +523,10 @@ export default function BusinessDetailScreen() {
           onPress={() => !deleteLoading && setDeleteModalVisible(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => { }}>
-            <Text style={styles.modalTitleTextDelete}>🗑️  Delete Business</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Feather name="trash-2" size={22} color="#F87171" />
+              <Text style={[styles.modalTitleTextDelete, { marginBottom: 0 }]}>Delete Business</Text>
+            </View>
             <Text style={styles.modalSubtitle}>
               This action cannot be undone. All passbooks and transactions under this business will be permanently deleted.
             </Text>
@@ -722,7 +730,7 @@ export default function BusinessDetailScreen() {
                 ]}
                 hitSlop={8}
               >
-                <Text style={styles.topBarIconText}>🚪</Text>
+                <Feather name="log-out" size={18} color="#94A3B8" />
               </Pressable>
               <Pressable
                 onPress={openEditModal}
@@ -732,7 +740,7 @@ export default function BusinessDetailScreen() {
                 ]}
                 hitSlop={8}
               >
-                <Text style={styles.topBarIconText}>✏️</Text>
+                <Feather name="edit-2" size={18} color="#94A3B8" />
               </Pressable>
               <Pressable
                 onPress={openDeleteModal}
@@ -743,7 +751,7 @@ export default function BusinessDetailScreen() {
                 ]}
                 hitSlop={8}
               >
-                <Text style={styles.topBarIconText}>🗑️</Text>
+                <Feather name="trash-2" size={18} color="#F87171" />
               </Pressable>
             </View>
           </View>

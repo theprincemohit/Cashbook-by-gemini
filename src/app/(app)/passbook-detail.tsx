@@ -26,6 +26,7 @@ import {
   View
 } from 'react-native';
 import Pdf from 'react-native-pdf';
+import { Feather } from '@expo/vector-icons';
 
 import {
   AppBorderRadius,
@@ -137,7 +138,10 @@ const TransactionItem = memo(({
               hitSlop={8}
               style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 4 }}
             >
-              <Text style={styles.txnReceipt}>📎 View</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Feather name="paperclip" size={12} color="#94A3B8" />
+                <Text style={styles.txnReceipt}>View</Text>
+              </View>
             </Pressable>
           ) : null}
         </View>
@@ -615,7 +619,7 @@ export default function PassbookDetailScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>💰</Text>
+      <Feather name="dollar-sign" size={48} color={AppColors.accentSolid} style={{ marginBottom: 16 }} />
       <Text style={styles.emptyTitle}>No transactions yet</Text>
       <Text style={styles.emptySubtitle}>
         Add your first credit or debit entry to get started
@@ -707,7 +711,10 @@ export default function PassbookDetailScreen() {
               pressed && styles.reportBtnPressed,
             ]}
           >
-            <Text style={styles.reportBtnText}>📄 Report</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Feather name="file-text" size={14} color="#FFFFFF" />
+              <Text style={styles.reportBtnText}>Report</Text>
+            </View>
           </Pressable>
 
           <Pressable
@@ -718,7 +725,7 @@ export default function PassbookDetailScreen() {
               hasActiveFilters && styles.filterIconBtnActive,
             ]}
           >
-            <Text style={styles.filterIconBtnText}>🔍</Text>
+            <Feather name="search" size={20} color="#FFFFFF" />
             {hasActiveFilters && (
               <View style={styles.activeFilterDotBadge}>
                 <Text style={styles.activeFilterDotText}>
@@ -770,7 +777,10 @@ export default function PassbookDetailScreen() {
           onPress={() => !editLoading && setEditModalVisible(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => { }}>
-            <Text style={styles.modalTitle}>✏️  Rename Passbook</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Feather name="edit-2" size={22} color="#FFFFFF" />
+              <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Rename Passbook</Text>
+            </View>
             <Text style={styles.modalSubtitle}>
               Enter a new name for this passbook
             </Text>
@@ -856,7 +866,10 @@ export default function PassbookDetailScreen() {
           onPress={() => !deleteLoading && setDeleteModalVisible(false)}
         >
           <Pressable style={styles.modalCard} onPress={() => { }}>
-            <Text style={styles.modalTitle}>🗑️  Delete Passbook</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Feather name="trash-2" size={22} color="#F87171" />
+              <Text style={[styles.modalTitle, { marginBottom: 0, color: '#F87171' }]}>Delete Passbook</Text>
+            </View>
             <Text style={styles.modalSubtitle}>
               This action is permanent. All transactions in this passbook will
               be deleted.
@@ -1073,7 +1086,7 @@ export default function PassbookDetailScreen() {
                         onPress={() => setShowFromPicker(true)}
                         style={styles.customDateBtn}
                       >
-                        <Text style={styles.customDateIcon}>📅</Text>
+                        <Feather name="calendar" size={16} color="#94A3B8" />
                         <Text style={styles.customDateText}>
                           {formatShortDate(customDateFrom)}
                         </Text>
@@ -1098,7 +1111,7 @@ export default function PassbookDetailScreen() {
                         onPress={() => setShowToPicker(true)}
                         style={styles.customDateBtn}
                       >
-                        <Text style={styles.customDateIcon}>📅</Text>
+                        <Feather name="calendar" size={16} color="#94A3B8" />
                         <Text style={styles.customDateText}>
                           {formatShortDate(customDateTo)}
                         </Text>
@@ -1236,7 +1249,7 @@ export default function PassbookDetailScreen() {
                 ]}
                 hitSlop={8}
               >
-                <Text style={styles.topBarIconText}>✏️</Text>
+                <Feather name="edit-2" size={18} color="#94A3B8" />
               </Pressable>
               <Pressable
                 onPress={openDeleteModal}
@@ -1247,7 +1260,7 @@ export default function PassbookDetailScreen() {
                 ]}
                 hitSlop={8}
               >
-                <Text style={styles.topBarIconText}>🗑️</Text>
+                <Feather name="trash-2" size={18} color="#F87171" />
               </Pressable>
             </View>
           </View>
