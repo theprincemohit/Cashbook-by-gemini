@@ -1517,7 +1517,7 @@ const styles = StyleSheet.create({
   // Floating Action Button (FAB)
   fabContainer: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 70,
     right: 20,
     borderRadius: AppBorderRadius.full,
     shadowColor: AppColors.glowAccent,
