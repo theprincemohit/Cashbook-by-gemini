@@ -129,6 +129,40 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, onPress, fo
   );
 });
 
+const PassbookSkeleton = () => {
+  const anim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [anim]);
+
+  return (
+    <Animated.View style={[styles.passbookCard, { opacity: anim, borderColor: 'transparent' }]}>
+      <View style={[styles.passbookIconWrapper, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+      <View style={styles.passbookInfo}>
+        <View style={{ width: 120, height: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 8 }} />
+        <View style={{ width: 80, height: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 }} />
+      </View>
+      <View style={styles.passbookBalanceContainer}>
+        <View style={{ width: 60, height: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 }} />
+      </View>
+    </Animated.View>
+  );
+};
+
 export default function BusinessDetailScreen() {
   const { id: initialId, name: initialName } = useLocalSearchParams<{ id: string; name: string }>();
   const { signOut } = useAuth();
@@ -764,9 +798,12 @@ export default function BusinessDetailScreen() {
           </View>
 
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={AppColors.accentSolid} />
-            </View>
+            <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+              {renderHeader()}
+              {[1, 2, 3, 4, 5].map((i) => (
+                <PassbookSkeleton key={i} />
+              ))}
+            </ScrollView>
           ) : (
             <FlatList
               data={passbooks}
