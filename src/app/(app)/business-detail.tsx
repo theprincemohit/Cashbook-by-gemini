@@ -763,6 +763,10 @@ export default function BusinessDetailScreen() {
               showsVerticalScrollIndicator={false}
               onScroll={handleScroll}
               scrollEventThrottle={16}
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={5}
+              removeClippedSubviews={true}
               refreshControl={
                 <RefreshControl
                   refreshing={isRefreshing}
@@ -807,9 +811,9 @@ export default function BusinessDetailScreen() {
         </Animated.View>
       </SafeAreaView>
 
-      {renderEditModal()}
-      {renderDeleteModal()}
-      {renderBusinessBottomSheet()}
+      {editModalVisible && renderEditModal()}
+      {deleteModalVisible && renderDeleteModal()}
+      {businessBottomSheetVisible && renderBusinessBottomSheet()}
     </LinearGradient>
   );
 }
