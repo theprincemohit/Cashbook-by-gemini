@@ -723,16 +723,6 @@ export default function BusinessDetailScreen() {
 
             <View style={styles.topBarActions}>
               <Pressable
-                onPress={handleSignOut}
-                style={({ pressed }) => [
-                  styles.topBarIconBtn,
-                  pressed && styles.topBarIconBtnPressed,
-                ]}
-                hitSlop={8}
-              >
-                <Feather name="log-out" size={18} color="#94A3B8" />
-              </Pressable>
-              <Pressable
                 onPress={openEditModal}
                 style={({ pressed }) => [
                   styles.topBarIconBtn,
@@ -752,6 +742,16 @@ export default function BusinessDetailScreen() {
                 hitSlop={8}
               >
                 <Feather name="trash-2" size={18} color="#F87171" />
+              </Pressable>
+              <Pressable
+                onPress={handleSignOut}
+                style={({ pressed }) => [
+                  styles.topBarIconBtn,
+                  pressed && styles.topBarIconBtnPressed,
+                ]}
+                hitSlop={8}
+              >
+                <Feather name="log-out" size={18} color="#94A3B8" />
               </Pressable>
             </View>
           </View>
