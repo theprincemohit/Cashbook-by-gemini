@@ -41,6 +41,10 @@ import {
   getTransactionTotals,
   type Transaction,
 } from '@/lib/transactions';
+import { useDebounce } from '@/hooks/use-debounce';
+import { ReceiptViewerModal } from '@/components/passbooks/ReceiptViewerModal';
+import { DeletePassbookModal } from '@/components/passbooks/DeletePassbookModal';
+import { EditPassbookModal } from '@/components/passbooks/EditPassbookModal';
 
 interface TransactionItemProps {
   item: Transaction;
@@ -60,15 +64,17 @@ const TransactionItem = memo(({
   formatDate,
 }: TransactionItemProps) => {
   const isCredit = item.type === 'credit';
-  const itemAnim = useRef(new Animated.Value(0)).current;
+  const itemAnim = useRef(new Animated.Value(index < 10 ? 0 : 1)).current;
 
   useEffect(() => {
-    Animated.timing(itemAnim, {
-      toValue: 1,
-      duration: 350,
-      delay: Math.min(index, 10) * 60,
-      useNativeDriver: true,
-    }).start();
+    if (index < 10) {
+      Animated.timing(itemAnim, {
+        toValue: 1,
+        duration: 350,
+        delay: index * 60,
+        useNativeDriver: true,
+      }).start();
+    }
   }, [itemAnim, index]);
 
   return (
@@ -101,10 +107,10 @@ const TransactionItem = memo(({
               { backgroundColor: isCredit ? AppColors.successBg : AppColors.errorBg },
             ]}
           >
-            <Feather 
-              name={isCredit ? 'arrow-down-left' : 'arrow-up-right'} 
-              size={16} 
-              color={isCredit ? AppColors.success : AppColors.error} 
+            <Feather
+              name={isCredit ? 'arrow-down-left' : 'arrow-up-right'}
+              size={16}
+              color={isCredit ? AppColors.success : AppColors.error}
             />
           </View>
           <View style={styles.txnInfo}>
@@ -179,6 +185,7 @@ export default function PassbookDetailScreen() {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'credit' | 'debit'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
@@ -208,9 +215,9 @@ export default function PassbookDetailScreen() {
   const [fullReceiptUrl, setFullReceiptUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleOpenAttachment = (url: string) => {
+  const handleOpenAttachment = useCallback((url: string) => {
     setFullReceiptUrl(url);
-  };
+  }, []);
 
   const handleDownloadReceipt = async (url: string) => {
     try {
@@ -443,14 +450,14 @@ export default function PassbookDetailScreen() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = useCallback((dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
-  };
+  }, []);
 
   // Totals
   const balance = totalCredit - totalDebit;
@@ -465,8 +472,8 @@ export default function PassbookDetailScreen() {
     }
 
     // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
+    if (debouncedSearchQuery.trim()) {
+      const q = debouncedSearchQuery.toLowerCase();
       result = result.filter(
         (t) =>
           (t.remark && t.remark.toLowerCase().includes(q)) ||
@@ -510,7 +517,7 @@ export default function PassbookDetailScreen() {
     }
 
     return result;
-  }, [transactions, activeFilter, searchQuery, dateFilter, minAmount, maxAmount, customDateFrom, customDateTo]);
+  }, [transactions, activeFilter, debouncedSearchQuery, dateFilter, minAmount, maxAmount, customDateFrom, customDateTo]);
 
   // Group transactions by date
   const groupedTransactions = useMemo(() => {
@@ -616,7 +623,7 @@ export default function PassbookDetailScreen() {
       index={index}
       onPress={handleEditTxn}
       onLongPress={handleDeleteTxn}
-      onReceiptPress={(url) => handleOpenAttachment(url)}
+      onReceiptPress={handleOpenAttachment}
       formatDate={formatDate}
     />
   ), [handleEditTxn, handleDeleteTxn, handleOpenAttachment, formatDate]);
@@ -765,185 +772,33 @@ export default function PassbookDetailScreen() {
 
   // ── Edit Modal ────────────────────────────────────────────────────────────
   const renderEditModal = () => (
-    <Modal
+    <EditPassbookModal
       visible={editModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => !editLoading && setEditModalVisible(false)}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => !editLoading && setEditModalVisible(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={() => { }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <Feather name="edit-2" size={22} color="#FFFFFF" />
-              <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Rename Passbook</Text>
-            </View>
-            <Text style={styles.modalSubtitle}>
-              Enter a new name for this passbook
-            </Text>
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                editError ? styles.modalInputError : null,
-              ]}
-              value={editName}
-              onChangeText={(text) => {
-                setEditName(text);
-                if (editError) setEditError('');
-              }}
-              placeholder="Passbook name"
-              placeholderTextColor={AppColors.textPlaceholder}
-              autoFocus
-              editable={!editLoading}
-              returnKeyType="done"
-              onSubmitEditing={handleEditSave}
-            />
-
-            {editError ? (
-              <Text style={styles.modalErrorText}>⚠ {editError}</Text>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setEditModalVisible(false)}
-                disabled={editLoading}
-                style={({ pressed }) => [
-                  styles.modalCancelBtn,
-                  pressed && styles.modalBtnPressed,
-                ]}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleEditSave}
-                disabled={editLoading || !editName.trim()}
-                style={({ pressed }) => [
-                  styles.modalConfirmBtn,
-                  pressed && styles.modalBtnPressed,
-                  (!editName.trim() || editLoading) && styles.modalBtnDisabled,
-                ]}
-              >
-                <LinearGradient
-                  colors={[AppColors.accentStart, AppColors.accentEnd]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalConfirmGradient}
-                >
-                  {editLoading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalConfirmText}>Save</Text>
-                  )}
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
+      onClose={() => setEditModalVisible(false)}
+      editName={editName}
+      setEditName={setEditName}
+      editError={editError}
+      setEditError={setEditError}
+      editLoading={editLoading}
+      onEditSave={handleEditSave}
+    />
   );
 
   // ── Delete Modal ──────────────────────────────────────────────────────────
   const deleteNameMatches = deleteConfirmText.trim() === passbookName.trim();
 
   const renderDeleteModal = () => (
-    <Modal
+    <DeletePassbookModal
       visible={deleteModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => !deleteLoading && setDeleteModalVisible(false)}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => !deleteLoading && setDeleteModalVisible(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={() => { }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <Feather name="trash-2" size={22} color="#F87171" />
-              <Text style={[styles.modalTitle, { marginBottom: 0, color: '#F87171' }]}>Delete Passbook</Text>
-            </View>
-            <Text style={styles.modalSubtitle}>
-              This action is permanent. All transactions in this passbook will
-              be deleted.
-            </Text>
-
-            <View style={styles.deleteWarningBox}>
-              <Text style={styles.deleteWarningText}>
-                To confirm, type{' '}
-                <Text style={styles.deleteWarningBold}>{passbookName}</Text>
-                {' '}below
-              </Text>
-            </View>
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                styles.modalInputDelete,
-                deleteError ? styles.modalInputError : null,
-              ]}
-              value={deleteConfirmText}
-              onChangeText={(text) => {
-                setDeleteConfirmText(text);
-                if (deleteError) setDeleteError('');
-              }}
-              placeholder={`Type "${passbookName}" to delete`}
-              placeholderTextColor={AppColors.textPlaceholder}
-              autoFocus
-              editable={!deleteLoading}
-              autoCapitalize="none"
-              returnKeyType="done"
-              onSubmitEditing={() => deleteNameMatches && handleDeleteConfirm()}
-            />
-
-            {deleteError ? (
-              <Text style={styles.modalErrorText}>⚠ {deleteError}</Text>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setDeleteModalVisible(false)}
-                disabled={deleteLoading}
-                style={({ pressed }) => [
-                  styles.modalCancelBtn,
-                  pressed && styles.modalBtnPressed,
-                ]}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleDeleteConfirm}
-                disabled={deleteLoading || !deleteNameMatches}
-                style={({ pressed }) => [
-                  styles.modalDeleteBtn,
-                  pressed && styles.modalBtnPressed,
-                  (!deleteNameMatches || deleteLoading) &&
-                  styles.modalBtnDisabled,
-                ]}
-              >
-                <View style={styles.modalDeleteInner}>
-                  {deleteLoading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.modalDeleteText}>Delete</Text>
-                  )}
-                </View>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
+      onClose={() => setDeleteModalVisible(false)}
+      passbookName={passbookName}
+      deleteConfirmText={deleteConfirmText}
+      setDeleteConfirmText={setDeleteConfirmText}
+      deleteError={deleteError}
+      setDeleteError={setDeleteError}
+      deleteLoading={deleteLoading}
+      onDeleteConfirm={handleDeleteConfirm}
+    />
   );
 
   const renderDateBottomSheet = () => (
@@ -1357,159 +1212,12 @@ export default function PassbookDetailScreen() {
       {renderDeleteModal()}
       {renderDateBottomSheet()}
 
-      {/* Full Page Receipt Modal */}
-      <Modal
-        visible={!!fullReceiptUrl}
-        animationType="fade"
-        transparent={false}
-        onRequestClose={() => setFullReceiptUrl(null)}
-      >
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#121214' }}>
-          {/* Header */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            backgroundColor: '#121214',
-            position: 'relative',
-          }}>
-            <Pressable
-              onPress={() => setFullReceiptUrl(null)}
-              style={{ position: 'absolute', left: 16, padding: 8 }}
-              hitSlop={12}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '400' }}>‹</Text>
-            </Pressable>
-            <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Attachment Preview</Text>
-          </View>
-
-          {/* Main Preview Area */}
-          {fullReceiptUrl ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
-              {(() => {
-                const urlLower = fullReceiptUrl.toLowerCase();
-                const isDoc = urlLower.endsWith('.pdf') || urlLower.endsWith('.doc') || urlLower.endsWith('.docx') || urlLower.includes('application/pdf');
-
-                if (isDoc) {
-                  return (
-                    <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#000000' }}>
-                      <Pdf
-                        trustAllCerts={false}
-                        source={{ uri: fullReceiptUrl, cache: true }}
-                        onLoadComplete={(numberOfPages) => {
-                          console.log(`PDF loaded. Total pages: ${numberOfPages}`);
-                        }}
-                        onError={(error) => {
-                          console.log('PDF Error:', error);
-                        }}
-                        style={{ flex: 1, width: Dimensions.get('window').width, height: Dimensions.get('window').height }}
-                      />
-                    </View>
-                  );
-                }
-
-                return (
-                  <Image
-                    source={{ uri: fullReceiptUrl }}
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode="contain"
-                  />
-                );
-              })()}
-            </View>
-          ) : null}
-
-          {/* Bottom Dual Action Bar (Share & Download) */}
-          <View style={{
-            flexDirection: 'row',
-            paddingHorizontal: 16,
-            paddingVertical: 16,
-            backgroundColor: '#121214',
-            gap: 12,
-          }}>
-            <Pressable
-              onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
-              style={({ pressed }) => [
-                {
-                  flex: 1,
-                  height: 52,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={[AppColors.accentStart, AppColors.accentEnd]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  padding: 1.5,
-                  borderRadius: 12,
-                  flex: 1,
-                }}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#1E1E24',
-                    borderRadius: 10.5,
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 18 }}>🔗</Text>
-                  <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Share</Text>
-                </View>
-              </LinearGradient>
-            </Pressable>
-
-            <Pressable
-              onPress={() => fullReceiptUrl && handleDownloadReceipt(fullReceiptUrl)}
-              disabled={isDownloading}
-              style={({ pressed }) => [
-                {
-                  flex: 1,
-                  height: 52,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={
-                  isDownloading
-                    ? [AppColors.buttonDisabled, AppColors.buttonDisabled]
-                    : [AppColors.accentStart, AppColors.accentEnd]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                {isDownloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Text style={{ color: '#FFFFFF', fontSize: 16 }}>↓</Text>
-                    <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>Download</Text>
-                  </>
-                )}
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </Modal>
+      <ReceiptViewerModal 
+        fullReceiptUrl={fullReceiptUrl}
+        setFullReceiptUrl={setFullReceiptUrl}
+        isDownloading={isDownloading}
+        handleDownloadReceipt={handleDownloadReceipt}
+      />
     </LinearGradient>
   );
 }
