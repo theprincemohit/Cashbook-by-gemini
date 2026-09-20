@@ -692,7 +692,7 @@ export default function PassbookDetailScreen() {
       {/* Passbook Summary Card */}
       <View style={styles.summaryCard}>
         <LinearGradient
-          colors={[AppColors.accentStart, AppColors.accentEnd]}
+          colors={['#059669', '#0369A1']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.summaryGradient}
@@ -700,13 +700,13 @@ export default function PassbookDetailScreen() {
           <View style={styles.summaryRowsContainer}>
             {/* 1st row: Net Balance */}
             <View style={styles.summaryRowItem}>
-              <Text style={styles.summaryRowLabel}>Net Balance</Text>
-              <Text
-                style={[
-                  styles.summaryRowValue,
-                  styles.summaryNetBalanceValue,
-                ]}
-              >
+              <View style={styles.summaryRowLeft}>
+                <View style={styles.summaryIconWrapper}>
+                  <Feather name="credit-card" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.summaryRowLabel}>Net Balance</Text>
+              </View>
+              <Text style={[styles.summaryRowValue, styles.summaryNetBalanceValue]}>
                 {balance < 0
                   ? `- ₹ ${Math.abs(balance).toLocaleString('en-IN')}`
                   : `₹ ${balance.toLocaleString('en-IN')}`}
@@ -717,7 +717,12 @@ export default function PassbookDetailScreen() {
 
             {/* 2nd row: Cash In (+) */}
             <View style={styles.summaryRowItem}>
-              <Text style={styles.summaryRowLabel}>Cash In (+)</Text>
+              <View style={styles.summaryRowLeft}>
+                <View style={styles.summaryIconWrapper}>
+                  <Feather name="arrow-up" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.summaryRowLabel}>Cash In (+)</Text>
+              </View>
               <Text style={styles.summaryRowValue}>
                 ₹ {totalCredit.toLocaleString('en-IN')}
               </Text>
@@ -727,7 +732,12 @@ export default function PassbookDetailScreen() {
 
             {/* 3rd row: Cash Out (-) */}
             <View style={styles.summaryRowItem}>
-              <Text style={styles.summaryRowLabel}>Cash Out (-)</Text>
+              <View style={styles.summaryRowLeft}>
+                <View style={styles.summaryIconWrapper}>
+                  <Feather name="arrow-down" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.summaryRowLabel}>Cash Out (-)</Text>
+              </View>
               <Text style={styles.summaryRowValue}>
                 ₹ {totalDebit.toLocaleString('en-IN')}
               </Text>
@@ -1393,35 +1403,47 @@ const styles = StyleSheet.create({
     borderRadius: AppBorderRadius.lg,
     overflow: 'hidden',
     marginBottom: AppSpacing.sm + 2,
-    shadowColor: AppColors.glowAccent,
+    shadowColor: '#0369A1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 6,
   },
   summaryGradient: {
-    padding: AppSpacing.xs + 2,
+    paddingVertical: 12,
+    paddingHorizontal: AppSpacing.md,
   },
   summaryRowsContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'transparent',
     borderRadius: AppBorderRadius.md,
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: 2,
   },
   summaryRowItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
+  },
+  summaryRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryIconWrapper: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   summaryRowSeparator: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   summaryRowLabel: {
-    fontSize: AppFontSizes.xs + 1,
+    fontSize: AppFontSizes.sm,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: '#FFFFFF',
   },
   summaryRowValue: {
     fontSize: AppFontSizes.sm + 1,
