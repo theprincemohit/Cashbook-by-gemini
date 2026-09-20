@@ -209,12 +209,12 @@ export default function PassbookDetailScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  // Pagination state
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const hasFetchedInitialRef = useRef(false);
 
-  // Totals state
+  // Filter state
   const [totalCredit, setTotalCredit] = useState(0);
   const [totalDebit, setTotalDebit] = useState(0);
 
@@ -314,7 +314,9 @@ export default function PassbookDetailScreen() {
 
   const fetchTransactions = useCallback(async () => {
     if (!passbookId) return;
-    setIsLoading(true);
+    if (!hasFetchedInitialRef.current) {
+      setIsLoading(true);
+    }
     setError('');
 
     // Fetch totals
@@ -338,6 +340,7 @@ export default function PassbookDetailScreen() {
     }
     setIsLoading(false);
     setIsRefreshing(false);
+    hasFetchedInitialRef.current = true;
   }, [passbookId]);
 
   useFocusEffect(

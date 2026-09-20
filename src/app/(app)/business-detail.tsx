@@ -212,6 +212,7 @@ export default function BusinessDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const hasFetchedInitialRef = useRef(false);
 
   // Businesses list state
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -263,7 +264,9 @@ export default function BusinessDetailScreen() {
 
   const fetchPassbooks = useCallback(async (bId: string) => {
     if (!bId) return;
-    setIsLoading(true);
+    if (!hasFetchedInitialRef.current) {
+      setIsLoading(true);
+    }
     const result = await getPassbooks(bId);
     if (result.error) {
       setError(result.error);
@@ -288,6 +291,7 @@ export default function BusinessDetailScreen() {
     }
     setIsLoading(false);
     setIsRefreshing(false);
+    hasFetchedInitialRef.current = true;
   }, []);
 
   const loadBusinessesList = useCallback(async () => {
