@@ -41,12 +41,13 @@ interface PassbookItemProps {
   index: number;
   balance?: number;
   isLoadingBalance?: boolean;
+  latestTxnDate?: string;
   onPress: (item: Passbook) => void;
   formatDate: (dateStr: string) => string;
   colors: [string, string];
 }
 
-const PassbookItem = memo(({ item, index, balance, isLoadingBalance, onPress, formatDate, colors }: PassbookItemProps) => {
+const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDate, onPress, formatDate, colors }: PassbookItemProps) => {
   const itemAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -98,7 +99,7 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, onPress, fo
             {item.name}
           </Text>
           <Text style={styles.passbookDate}>
-            Created {formatDate(item.created_at)}
+            {latestTxnDate ? `Updated ${formatDate(latestTxnDate)}` : `Created ${formatDate(item.created_at)}`}
           </Text>
         </View>
 
@@ -208,6 +209,7 @@ export default function BusinessDetailScreen() {
   const [businessName, setBusinessName] = useState(initialName ?? 'Business');
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
+  const [latestTxnDates, setLatestTxnDates] = useState<Record<string, string>>({});
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -272,21 +274,35 @@ export default function BusinessDetailScreen() {
       setError(result.error);
     } else {
       const data = result.data ?? [];
-      setPassbooks(data);
       setError('');
       if (data.length > 0) {
         setIsLoadingBalances(true);
         const balancesRes = await getPassbookBalances(data.map((p) => p.id));
         if (balancesRes.data) {
           const map: Record<string, number> = {};
+          const datesMap: Record<string, string> = {};
           Object.entries(balancesRes.data).forEach(([id, val]) => {
             map[id] = val.balance;
+            if (val.latest_txn_date) {
+              datesMap[id] = val.latest_txn_date;
+            }
           });
           setBalances(map);
+          setLatestTxnDates(datesMap);
+          
+          const sortedData = [...data].sort((a, b) => {
+            const dateA = balancesRes.data![a.id]?.latest_txn_date || a.created_at;
+            const dateB = balancesRes.data![b.id]?.latest_txn_date || b.created_at;
+            return new Date(dateB).getTime() - new Date(dateA).getTime();
+          });
+          setPassbooks(sortedData);
+        } else {
+          setPassbooks(data);
         }
         setIsLoadingBalances(false);
       } else {
         setBalances({});
+        setPassbooks(data);
       }
     }
     setIsLoading(false);
@@ -439,6 +455,7 @@ export default function BusinessDetailScreen() {
         index={index}
         balance={balances[item.id]}
         isLoadingBalance={isLoadingBalances}
+        latestTxnDate={latestTxnDates[item.id]}
         onPress={handlePassbookPress}
         formatDate={formatDate}
         colors={colors}

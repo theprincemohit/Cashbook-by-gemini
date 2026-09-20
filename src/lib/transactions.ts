@@ -78,7 +78,7 @@ export async function getTransactionTotals(
 export async function getPassbookBalances(
   passbookIds: string[]
 ): Promise<{
-  data: Record<string, { total_credit: number; total_debit: number; balance: number }> | null;
+  data: Record<string, { total_credit: number; total_debit: number; balance: number; latest_txn_date?: string }> | null;
   error: string | null;
 }> {
   if (!passbookIds || passbookIds.length === 0) {
@@ -87,14 +87,14 @@ export async function getPassbookBalances(
 
   const { data, error } = await supabase
     .from('transactions')
-    .select('passbook_id, type, amount')
+    .select('passbook_id, type, amount, created_at')
     .in('passbook_id', passbookIds);
 
   if (error) {
     return { data: null, error: error.message };
   }
 
-  const result: Record<string, { total_credit: number; total_debit: number; balance: number }> = {};
+  const result: Record<string, { total_credit: number; total_debit: number; balance: number; latest_txn_date?: string }> = {};
 
   for (const id of passbookIds) {
     result[id] = { total_credit: 0, total_debit: 0, balance: 0 };
@@ -110,6 +110,11 @@ export async function getPassbookBalances(
         result[txn.passbook_id].total_credit += amt;
       } else if (txn.type === 'debit') {
         result[txn.passbook_id].total_debit += amt;
+      }
+      
+      const currLatest = result[txn.passbook_id].latest_txn_date;
+      if (!currLatest || new Date(txn.created_at) > new Date(currLatest)) {
+        result[txn.passbook_id].latest_txn_date = txn.created_at;
       }
     }
 
