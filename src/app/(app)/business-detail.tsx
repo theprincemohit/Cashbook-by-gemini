@@ -21,7 +21,7 @@ import {
 
 import { useBusiness } from '@/context/BusinessContext';
 
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 
 import {
   AppBorderRadius,
@@ -566,9 +566,12 @@ export default function BusinessDetailScreen() {
                 },
               ]}
             >
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                <Ionicons name="business" size={16} color="#FFFFFF" />
+              </View>
               <View style={{ flexShrink: 1 }}>
                 <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
-                  {businessName.slice(0, 10) ?? 'Select Business'}
+                  {businessName.slice(0, 15) ?? 'Select Business'}
                 </Text>
                 <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 10, marginTop: 1 }}>
                   Tap to switch Business
