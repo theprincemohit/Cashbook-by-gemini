@@ -2,13 +2,16 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
+import { SQLiteProvider } from 'expo-sqlite';
+import { initializeDatabase } from '@/lib/db';
 import { AuthProvider } from '@/context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    <SQLiteProvider databaseName="cashdiary.db" onInit={initializeDatabase}>
+      <AuthProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -22,5 +25,6 @@ export default function RootLayout() {
         <Stack.Screen name="(app)" />
       </Stack>
     </AuthProvider>
+    </SQLiteProvider>
   );
 }

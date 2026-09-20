@@ -48,7 +48,8 @@
           "photosPermission": "Allow CashDiary to access your photos to attach receipt images.",
           "cameraPermission": "Allow CashDiary to access your camera to take receipt photos."
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
