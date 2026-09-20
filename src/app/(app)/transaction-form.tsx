@@ -1567,7 +1567,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: AppBorderRadius.md,
     padding: 4,
-    marginBottom: AppSpacing.xl,
+    marginBottom: AppSpacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
@@ -1603,7 +1603,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   // Inputs
-  inputGroup: { marginBottom: AppSpacing.md },
+  inputGroup: { marginBottom: AppSpacing.sm + 2 },
   inputLabel: {
     fontSize: AppFontSizes.xs + 1,
     fontWeight: '600',
