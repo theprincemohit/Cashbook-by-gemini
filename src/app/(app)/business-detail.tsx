@@ -163,6 +163,36 @@ const PassbookSkeleton = () => {
   );
 };
 
+const BusinessRowSkeleton = () => {
+  const anim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [anim]);
+
+  return (
+    <Animated.View style={[styles.businessRowItem, { opacity: anim, borderColor: 'transparent' }]}>
+      <View style={styles.businessRowLeft}>
+        <View style={[styles.checkboxSquare, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'transparent' }]} />
+        <View style={{ width: 120, height: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, marginLeft: 12 }} />
+      </View>
+    </Animated.View>
+  );
+};
+
 export default function BusinessDetailScreen() {
   const { id: initialId, name: initialName } = useLocalSearchParams<{ id: string; name: string }>();
   const { signOut } = useAuth();
@@ -651,7 +681,11 @@ export default function BusinessDetailScreen() {
           <Text style={styles.sheetTitle}>Select Business</Text>
 
           {isLoadingBusinesses ? (
-            <ActivityIndicator size="small" color={AppColors.accentSolid} style={{ marginVertical: 20 }} />
+            <ScrollView style={{ maxHeight: 260, marginVertical: 6 }}>
+              {[1, 2, 3].map((i) => (
+                <BusinessRowSkeleton key={i} />
+              ))}
+            </ScrollView>
           ) : (
             <ScrollView style={{ maxHeight: 260, marginVertical: 6 }}>
               {businesses.map((b) => {
