@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 
 import { AppBorderRadius, AppColors, AppFontSizes, AppSpacing } from '@/constants/theme';
+import BottomTabBar from '@/components/BottomTabBar';
 import { useAuth } from '@/context/AuthContext';
 import { useBusiness } from '@/context/BusinessContext';
 import { deleteBusiness, updateBusiness } from '@/lib/businesses';
@@ -329,6 +330,7 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
         </View>
+        <BottomTabBar activeTab="settings" />
       </SafeAreaView>
 
       {renderEditModal()}
