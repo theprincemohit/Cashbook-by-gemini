@@ -160,6 +160,42 @@ const TransactionItem = memo(({
   );
 });
 
+const TransactionSkeleton = () => {
+  const anim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [anim]);
+
+  return (
+    <Animated.View style={[styles.txnCard, { opacity: anim, borderColor: 'transparent' }]}>
+      <View style={styles.txnLeft}>
+        <View style={[styles.txnIcon, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+        <View style={styles.txnInfo}>
+          <View style={{ width: 100, height: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 6 }} />
+          <View style={{ width: 60, height: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 }} />
+        </View>
+      </View>
+      <View style={styles.txnRight}>
+        <View style={{ width: 70, height: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 }} />
+      </View>
+    </Animated.View>
+  );
+};
+
 export default function PassbookDetailScreen() {
   const { passbookId, passbookName: initialName, businessName } = useLocalSearchParams<{
     passbookId: string;
@@ -1124,9 +1160,12 @@ export default function PassbookDetailScreen() {
           </View>
 
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={AppColors.accentSolid} />
-            </View>
+            <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+              {renderHeader()}
+              {[1, 2, 3, 4, 5].map((i) => (
+                <TransactionSkeleton key={i} />
+              ))}
+            </ScrollView>
           ) : (
             <SectionList
               sections={groupedTransactions}
