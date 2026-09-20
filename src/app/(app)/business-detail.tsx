@@ -316,7 +316,14 @@ export default function BusinessDetailScreen() {
       setDeleteError(result.error);
     } else {
       setDeleteModalVisible(false);
-      router.back();
+      const remainingBusinesses = businesses.filter((b) => b.id !== selectedBusinessId);
+      setBusinesses(remainingBusinesses);
+      
+      if (remainingBusinesses.length > 0) {
+        handleSelectBusiness(remainingBusinesses[0]);
+      } else {
+        router.replace('/');
+      }
     }
   };
 
