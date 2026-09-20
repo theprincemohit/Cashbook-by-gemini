@@ -101,7 +101,11 @@ const TransactionItem = memo(({
               { backgroundColor: isCredit ? AppColors.successBg : AppColors.errorBg },
             ]}
           >
-            <Text style={styles.txnIconText}>{isCredit ? '↓' : '↑'}</Text>
+            <Feather 
+              name={isCredit ? 'arrow-down-left' : 'arrow-up-right'} 
+              size={16} 
+              color={isCredit ? AppColors.success : AppColors.error} 
+            />
           </View>
           <View style={styles.txnInfo}>
             <Text style={styles.txnRemark} numberOfLines={1}>
@@ -654,7 +658,6 @@ export default function PassbookDetailScreen() {
                 style={[
                   styles.summaryRowValue,
                   styles.summaryNetBalanceValue,
-                  balance < 0 ? styles.summaryNetBalanceNegative : null,
                 ]}
               >
                 {balance < 0
@@ -668,7 +671,7 @@ export default function PassbookDetailScreen() {
             {/* 2nd row: Cash In (+) */}
             <View style={styles.summaryRowItem}>
               <Text style={styles.summaryRowLabel}>Cash In (+)</Text>
-              <Text style={[styles.summaryRowValue, styles.summaryCashInValue]}>
+              <Text style={styles.summaryRowValue}>
                 ₹ {totalCredit.toLocaleString('en-IN')}
               </Text>
             </View>
@@ -678,7 +681,7 @@ export default function PassbookDetailScreen() {
             {/* 3rd row: Cash Out (-) */}
             <View style={styles.summaryRowItem}>
               <Text style={styles.summaryRowLabel}>Cash Out (-)</Text>
-              <Text style={[styles.summaryRowValue, styles.summaryCashOutValue]}>
+              <Text style={styles.summaryRowValue}>
                 ₹ {totalDebit.toLocaleString('en-IN')}
               </Text>
             </View>
@@ -1227,7 +1230,7 @@ export default function PassbookDetailScreen() {
                 ]}
                 hitSlop={12}
               >
-                <Text style={styles.backText}>←</Text>
+                <Feather name="arrow-left" size={24} color={AppColors.accentSolid} />
               </Pressable>
               <View style={styles.topBarTitleContainer}>
                 <Text style={styles.topBarPassbookName} numberOfLines={1}>
@@ -1649,12 +1652,10 @@ const styles = StyleSheet.create({
     padding: AppSpacing.xs + 2,
   },
   summaryRowsContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
     borderRadius: AppBorderRadius.md,
     paddingHorizontal: AppSpacing.md,
     paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   summaryRowItem: {
     flexDirection: 'row',
@@ -1680,15 +1681,6 @@ const styles = StyleSheet.create({
     fontSize: AppFontSizes.md,
     fontWeight: '800',
     color: '#FFFFFF',
-  },
-  summaryNetBalanceNegative: {
-    color: '#FCA5A5',
-  },
-  summaryCashInValue: {
-    color: '#34D399',
-  },
-  summaryCashOutValue: {
-    color: '#F87171',
   },
   summaryItemLabel: {
     fontSize: AppFontSizes.xs,
