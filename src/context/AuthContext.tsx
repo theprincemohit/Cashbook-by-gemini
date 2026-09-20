@@ -8,6 +8,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { supabase } from '@/lib/supabase';
 
@@ -256,6 +257,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 
   const signOut = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem('last_selected_business_id');
+      await AsyncStorage.removeItem('last_selected_business_name');
+    } catch (e) {
+      console.log('Failed to clear AsyncStorage:', e);
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       Alert.alert('Error', error.message);

@@ -23,6 +23,7 @@ import {
   AppSpacing,
 } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useBusiness } from '@/context/BusinessContext';
 import { getBusinesses, type Business } from '@/lib/businesses';
 
 interface BusinessItemProps {
@@ -81,6 +82,7 @@ const BusinessItem = memo(({ item, index, onPress, formatDate }: BusinessItemPro
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
+  const { setActiveBusiness } = useBusiness();
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +109,19 @@ export default function HomeScreen() {
   }, [fadeAnim, slideAnim]);
 
   const fetchBusinesses = useCallback(async () => {
+    // Fast path: Route directly if we have a saved business in local storage
+    try {
+      const lastSavedId = await AsyncStorage.getItem('last_selected_business_id');
+      const lastSavedName = await AsyncStorage.getItem('last_selected_business_name');
+      if (lastSavedId && lastSavedName) {
+        setActiveBusiness({ id: lastSavedId, name: lastSavedName });
+        router.replace('/(app)/business-detail');
+        return;
+      }
+    } catch (e) {
+      console.log('Error reading AsyncStorage in fast path:', e);
+    }
+
     const result = await getBusinesses();
     if (result.error) {
       setError(result.error);
@@ -118,20 +133,8 @@ export default function HomeScreen() {
       // If user already has at least one business, directly navigate to business-detail
       if (data.length > 0) {
         let targetBusiness = data[0];
-        try {
-          const lastSavedId = await AsyncStorage.getItem('last_selected_business_id');
-          if (lastSavedId) {
-            const found = data.find((b) => b.id === lastSavedId);
-            if (found) targetBusiness = found;
-          }
-        } catch (e) {
-          console.log('Error reading last_selected_business_id:', e);
-        }
-
-        router.replace({
-          pathname: '/(app)/business-detail',
-          params: { id: targetBusiness.id, name: targetBusiness.name },
-        });
+        setActiveBusiness({ id: targetBusiness.id, name: targetBusiness.name });
+        router.replace('/(app)/business-detail');
         return;
       }
     }
@@ -172,11 +175,9 @@ export default function HomeScreen() {
   };
 
   const handleBusinessPress = useCallback((item: Business) => {
-    router.push({
-      pathname: '/(app)/business-detail',
-      params: { id: item.id, name: item.name },
-    });
-  }, []);
+    setActiveBusiness({ id: item.id, name: item.name });
+    router.push('/(app)/business-detail');
+  }, [setActiveBusiness]);
 
   const renderBusinessItem = useCallback(({ item, index }: { item: Business; index: number }) => (
     <BusinessItem

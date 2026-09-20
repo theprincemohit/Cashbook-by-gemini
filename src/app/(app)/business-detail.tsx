@@ -1,12 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   FlatList,
-  KeyboardAvoidingView,
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -18,10 +16,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useBusiness } from '@/context/BusinessContext';
 
 import { Feather } from '@expo/vector-icons';
 
@@ -31,8 +29,7 @@ import {
   AppFontSizes,
   AppSpacing,
 } from '@/constants/theme';
-import { useAuth } from '@/context/AuthContext';
-import { deleteBusiness, getBusinesses, updateBusiness, type Business } from '@/lib/businesses';
+import { getBusinesses, type Business } from '@/lib/businesses';
 import { getPassbooks, type Passbook } from '@/lib/passbooks';
 import { getPassbookBalances } from '@/lib/transactions';
 
@@ -195,43 +192,28 @@ const BusinessRowSkeleton = () => {
 };
 
 export default function BusinessDetailScreen() {
-  const { id: initialId, name: initialName } = useLocalSearchParams<{ id: string; name: string }>();
-  const { signOut } = useAuth();
-
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
-  };
-
-  const [selectedBusinessId, setSelectedBusinessId] = useState(initialId || '');
-  const [businessName, setBusinessName] = useState(initialName ?? 'Business');
+  const { activeBusiness, setActiveBusiness } = useBusiness();
+  const selectedBusinessId = activeBusiness?.id || '';
+  const businessName = activeBusiness?.name || 'Business';
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
-  const [balances, setBalances] = useState<Record<string, number>>({});
-  const [latestTxnDates, setLatestTxnDates] = useState<Record<string, string>>({});
-  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPassbooks = useMemo(() => {
+    if (!searchQuery.trim()) return passbooks;
+    return passbooks.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [passbooks, searchQuery]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
   const hasFetchedInitialRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [latestTxnDates, setLatestTxnDates] = useState<Record<string, string>>({});
 
   // Businesses list state
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessBottomSheetVisible, setBusinessBottomSheetVisible] = useState(false);
   const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(false);
-
-  // Edit modal state
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState('');
-
-  // Delete modal state
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
 
   // FAB scroll state
   const [isFabCollapsed, setIsFabCollapsed] = useState(false);
@@ -289,7 +271,7 @@ export default function BusinessDetailScreen() {
           });
           setBalances(map);
           setLatestTxnDates(datesMap);
-          
+
           const sortedData = [...data].sort((a, b) => {
             const dateA = balancesRes.data![a.id]?.latest_txn_date || a.created_at;
             const dateB = balancesRes.data![b.id]?.latest_txn_date || b.created_at;
@@ -337,78 +319,9 @@ export default function BusinessDetailScreen() {
   };
 
   const handleSelectBusiness = async (b: Business) => {
-    setSelectedBusinessId(b.id);
-    setBusinessName(b.name);
+    setActiveBusiness({ id: b.id, name: b.name });
     setBusinessBottomSheetVisible(false);
-    try {
-      await AsyncStorage.setItem('last_selected_business_id', b.id);
-    } catch (e) {
-      console.log('Failed to save last selected business id:', e);
-    }
     fetchPassbooks(b.id);
-  };
-
-  // ── Edit ──────────────────────────────────────────────────────────────────
-  const openEditModal = () => {
-    setEditName(businessName);
-    setEditError('');
-    setEditModalVisible(true);
-  };
-
-  const handleEditSave = async () => {
-    const trimmed = editName.trim();
-    if (!trimmed) {
-      setEditError('Business name cannot be empty');
-      return;
-    }
-    if (trimmed === businessName) {
-      setEditModalVisible(false);
-      return;
-    }
-    setEditLoading(true);
-    setEditError('');
-    const result = await updateBusiness(selectedBusinessId, trimmed);
-    setEditLoading(false);
-    if (result.error) {
-      setEditError(result.error);
-    } else {
-      setBusinessName(trimmed);
-      setBusinesses((prev) =>
-        prev.map((item) => (item.id === selectedBusinessId ? { ...item, name: trimmed } : item))
-      );
-      setEditModalVisible(false);
-    }
-  };
-
-  // ── Delete ────────────────────────────────────────────────────────────────
-  const openDeleteModal = () => {
-    setDeleteConfirmText('');
-    setDeleteError('');
-    setDeleteModalVisible(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (deleteConfirmText.trim() !== businessName.trim()) {
-      setDeleteError('Business name does not match');
-      return;
-    }
-    setDeleteLoading(true);
-    setDeleteError('');
-    const result = await deleteBusiness(selectedBusinessId);
-    setDeleteLoading(false);
-    if (result.error) {
-      setDeleteError(result.error);
-    } else {
-      setDeleteModalVisible(false);
-      const remainingBusinesses = businesses.filter((b) => b.id !== selectedBusinessId);
-      setBusinesses(remainingBusinesses);
-      
-      if (remainingBusinesses.length > 0) {
-        handleSelectBusiness(remainingBusinesses[0]);
-      } else {
-        router.replace('/');
-      }
-    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -504,184 +417,30 @@ export default function BusinessDetailScreen() {
         </View>
       ) : null}
 
+      {/* Search Bar */}
+      {passbooks.length >= 5 && (
+        <View style={styles.searchContainer}>
+          <Feather name="search" size={18} color="rgba(255,255,255,0.4)" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search passbooks..."
+            placeholderTextColor="rgba(255, 255, 255, 0.4)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+              <Feather name="x" size={16} color="rgba(255,255,255,0.6)" />
+            </Pressable>
+          ) : null}
+        </View>
+      )}
+
       {/* Section Header */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Passbooks</Text>
       </View>
     </>
-  );
-
-  // ── Edit Modal ────────────────────────────────────────────────────────────
-  const renderEditModal = () => (
-    <Modal
-      visible={editModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => !editLoading && setEditModalVisible(false)}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => !editLoading && setEditModalVisible(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={() => { }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <Feather name="edit-2" size={22} color="#FFFFFF" />
-              <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Rename Business</Text>
-            </View>
-            <Text style={styles.modalSubtitle}>
-              Enter a new name for this business
-            </Text>
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                editError ? styles.modalInputError : null,
-              ]}
-              value={editName}
-              onChangeText={(text) => {
-                setEditName(text);
-                if (editError) setEditError('');
-              }}
-              placeholder="Business name"
-              placeholderTextColor={AppColors.textPlaceholder}
-              autoFocus
-              editable={!editLoading}
-              returnKeyType="done"
-              onSubmitEditing={handleEditSave}
-            />
-
-            {editError ? (
-              <Text style={styles.modalErrorText}>⚠ {editError}</Text>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setEditModalVisible(false)}
-                disabled={editLoading}
-                style={({ pressed }) => [
-                  styles.modalCancelBtn,
-                  pressed && styles.modalBtnPressed,
-                ]}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleEditSave}
-                disabled={editLoading || !editName.trim()}
-                style={({ pressed }) => [
-                  styles.modalConfirmBtn,
-                  pressed && styles.modalBtnPressed,
-                  (!editName.trim() || editLoading) && styles.modalBtnDisabled,
-                ]}
-              >
-                <LinearGradient
-                  colors={[AppColors.accentStart, AppColors.accentEnd]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalConfirmGradient}
-                >
-                  {editLoading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <Text style={styles.modalConfirmText}>Save</Text>
-                  )}
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-
-  // ── Delete Modal ──────────────────────────────────────────────────────────
-  const renderDeleteModal = () => (
-    <Modal
-      visible={deleteModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => !deleteLoading && setDeleteModalVisible(false)}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => !deleteLoading && setDeleteModalVisible(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={() => { }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <Feather name="trash-2" size={22} color="#F87171" />
-              <Text style={[styles.modalTitleTextDelete, { marginBottom: 0 }]}>Delete Business</Text>
-            </View>
-            <Text style={styles.modalSubtitle}>
-              This action cannot be undone. All passbooks and transactions under this business will be permanently deleted.
-            </Text>
-            <Text style={styles.modalConfirmInstruction}>
-              Type <Text style={styles.modalBoldText}>{businessName}</Text> to confirm:
-            </Text>
-
-            <TextInput
-              style={[
-                styles.modalInput,
-                deleteError ? styles.modalInputError : null,
-              ]}
-              value={deleteConfirmText}
-              onChangeText={(text) => {
-                setDeleteConfirmText(text);
-                if (deleteError) setDeleteError('');
-              }}
-              placeholder={businessName}
-              placeholderTextColor={AppColors.textPlaceholder}
-              autoCapitalize="none"
-              editable={!deleteLoading}
-            />
-
-            {deleteError ? (
-              <Text style={styles.modalErrorText}>⚠ {deleteError}</Text>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setDeleteModalVisible(false)}
-                disabled={deleteLoading}
-                style={({ pressed }) => [
-                  styles.modalCancelBtn,
-                  pressed && styles.modalBtnPressed,
-                ]}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleDeleteConfirm}
-                disabled={
-                  deleteLoading ||
-                  deleteConfirmText.trim() !== businessName.trim()
-                }
-                style={({ pressed }) => [
-                  styles.modalDeleteBtn,
-                  pressed && styles.modalBtnPressed,
-                  (deleteConfirmText.trim() !== businessName.trim() ||
-                    deleteLoading) &&
-                  styles.modalBtnDisabled,
-                ]}
-              >
-                {deleteLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.modalDeleteBtnText}>Delete</Text>
-                )}
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
   );
 
   // ── Business List Bottom Sheet Modal ───────────────────────────────────────
@@ -816,40 +575,6 @@ export default function BusinessDetailScreen() {
               </View>
               <Text style={{ color: '#818CF8', fontSize: 12 }}>▼</Text>
             </Pressable>
-
-            <View style={styles.topBarActions}>
-              <Pressable
-                onPress={openEditModal}
-                style={({ pressed }) => [
-                  styles.topBarIconBtn,
-                  pressed && styles.topBarIconBtnPressed,
-                ]}
-                hitSlop={8}
-              >
-                <Feather name="edit-2" size={18} color="#94A3B8" />
-              </Pressable>
-              <Pressable
-                onPress={openDeleteModal}
-                style={({ pressed }) => [
-                  styles.topBarIconBtn,
-                  styles.topBarDeleteBtn,
-                  pressed && styles.topBarIconBtnPressed,
-                ]}
-                hitSlop={8}
-              >
-                <Feather name="trash-2" size={18} color="#F87171" />
-              </Pressable>
-              <Pressable
-                onPress={handleSignOut}
-                style={({ pressed }) => [
-                  styles.topBarIconBtn,
-                  pressed && styles.topBarIconBtnPressed,
-                ]}
-                hitSlop={8}
-              >
-                <Feather name="log-out" size={18} color="#94A3B8" />
-              </Pressable>
-            </View>
           </View>
 
           {isLoading ? (
@@ -861,7 +586,7 @@ export default function BusinessDetailScreen() {
             </ScrollView>
           ) : (
             <FlatList
-              data={passbooks}
+              data={filteredPassbooks}
               keyExtractor={(item) => item.id}
               renderItem={renderPassbookItem}
               ListHeaderComponent={renderHeader}
@@ -919,12 +644,12 @@ export default function BusinessDetailScreen() {
 
         {/* Custom Bottom Tab Bar */}
         <View style={styles.bottomTabBar}>
-          <Pressable style={styles.bottomTabItem} onPress={() => {}}>
+          <Pressable style={styles.bottomTabItem} onPress={() => { }}>
             <Feather name="book" size={24} color={AppColors.accentSolid} />
             <Text style={[styles.bottomTabLabel, { color: AppColors.accentSolid }]}>CashDiary</Text>
           </Pressable>
-          
-          <Pressable style={styles.bottomTabItem} onPress={() => router.push('/(app)/settings')}>
+
+          <Pressable style={styles.bottomTabItem} onPress={() => router.push({ pathname: '/(app)/settings', params: { id: selectedBusinessId, name: businessName } })}>
             <Feather name="settings" size={24} color="#94A3B8" />
             <Text style={styles.bottomTabLabel}>Settings</Text>
           </Pressable>
@@ -932,8 +657,6 @@ export default function BusinessDetailScreen() {
       </SafeAreaView>
 
       {/* Full Page Modals */}
-      {renderEditModal()}
-      {deleteModalVisible && renderDeleteModal()}
       {businessBottomSheetVisible && renderBusinessBottomSheet()}
     </LinearGradient>
   );
@@ -1100,6 +823,30 @@ const styles = StyleSheet.create({
   errorText: {
     color: AppColors.error,
     fontSize: AppFontSizes.sm,
+  },
+  // Search
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: AppBorderRadius.full,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+    marginBottom: AppSpacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  searchIcon: {
+    marginRight: AppSpacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm,
+    paddingVertical: 2,
+  },
+  clearSearchBtn: {
+    padding: 4,
   },
   // Section
   sectionHeader: {

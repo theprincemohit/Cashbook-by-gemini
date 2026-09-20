@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import Pdf from 'react-native-pdf';
 import { Feather } from '@expo/vector-icons';
-
+import { useBusiness } from '@/context/BusinessContext';
 import {
   AppBorderRadius,
   AppColors,
@@ -197,10 +197,11 @@ const TransactionSkeleton = () => {
 };
 
 export default function PassbookDetailScreen() {
-  const { passbookId, passbookName: initialName, businessName } = useLocalSearchParams<{
+  const { activeBusiness } = useBusiness();
+  const businessName = activeBusiness?.name || 'Business';
+  const { passbookId, passbookName: initialName } = useLocalSearchParams<{
     passbookId: string;
     passbookName: string;
-    businessName: string;
   }>();
 
   const [passbookName, setPassbookName] = useState(initialName ?? 'Passbook');
