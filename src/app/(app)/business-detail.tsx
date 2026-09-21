@@ -340,9 +340,11 @@ export default function BusinessDetailScreen() {
   };
 
   const handleSelectBusiness = async (b: Business) => {
+    setIsLoading(true);
     setActiveBusiness({ id: b.id, name: b.name });
     setBusinessBottomSheetVisible(false);
-    fetchPassbooks(b.id);
+    await fetchPassbooks(b.id);
+    setIsLoading(false);
   };
 
   const formatDate = (dateStr: string) => {
@@ -603,7 +605,7 @@ export default function BusinessDetailScreen() {
           {isLoading ? (
             <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
               {renderHeader()}
-              {[1, 2, 3, 4, 5].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <PassbookSkeleton key={i} />
               ))}
             </ScrollView>
