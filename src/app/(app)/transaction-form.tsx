@@ -642,7 +642,49 @@ export default function TransactionFormScreen() {
 
               {/* Date */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Date</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: AppSpacing.xs }}>
+                  <Text style={[styles.inputLabel, { marginBottom: 0 }]}>Date</Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(() => {
+                      const today = new Date();
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      const isToday = date.toDateString() === today.toDateString();
+                      const isYesterday = date.toDateString() === yesterday.toDateString();
+
+                      return (
+                        <>
+                          <Pressable
+                            onPress={() => setDate(yesterday)}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 4,
+                              backgroundColor: isYesterday ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.08)',
+                              borderRadius: 6,
+                              borderWidth: 1,
+                              borderColor: isYesterday ? AppColors.accentSolid : 'transparent',
+                            }}
+                          >
+                            <Text style={{ fontSize: 12, color: isYesterday ? AppColors.accentSolid : AppColors.textSecondary, fontWeight: isYesterday ? '600' : '400' }}>Yesterday</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => setDate(today)}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 4,
+                              backgroundColor: isToday ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.08)',
+                              borderRadius: 6,
+                              borderWidth: 1,
+                              borderColor: isToday ? AppColors.accentSolid : 'transparent',
+                            }}
+                          >
+                            <Text style={{ fontSize: 12, color: isToday ? AppColors.accentSolid : AppColors.textSecondary, fontWeight: isToday ? '600' : '400' }}>Today</Text>
+                          </Pressable>
+                        </>
+                      );
+                    })()}
+                  </View>
+                </View>
                 {Platform.OS === 'android' && (
                   <Pressable
                     onPress={() => setShowDatePicker(true)}
