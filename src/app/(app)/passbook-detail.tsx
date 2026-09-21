@@ -1,3 +1,22 @@
+import { DeletePassbookModal } from '@/components/passbooks/DeletePassbookModal';
+import { EditPassbookModal } from '@/components/passbooks/EditPassbookModal';
+import { ReceiptViewerModal } from '@/components/passbooks/ReceiptViewerModal';
+import {
+  AppBorderRadius,
+  AppColors,
+  AppFontSizes,
+  AppSpacing,
+} from '@/constants/theme';
+import { useBusiness } from '@/context/BusinessContext';
+import { useDebounce } from '@/hooks/use-debounce';
+import { deletePassbook, updatePassbook } from '@/lib/passbooks';
+import {
+  deleteTransaction,
+  getTransactions,
+  getTransactionTotals,
+  type Transaction,
+} from '@/lib/transactions';
+import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +28,6 @@ import {
   Alert,
   Animated,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Modal,
   NativeScrollEvent,
@@ -25,26 +43,6 @@ import {
   TextInput,
   View
 } from 'react-native';
-import Pdf from 'react-native-pdf';
-import { Feather } from '@expo/vector-icons';
-import { useBusiness } from '@/context/BusinessContext';
-import {
-  AppBorderRadius,
-  AppColors,
-  AppFontSizes,
-  AppSpacing,
-} from '@/constants/theme';
-import { deletePassbook, updatePassbook } from '@/lib/passbooks';
-import {
-  deleteTransaction,
-  getTransactions,
-  getTransactionTotals,
-  type Transaction,
-} from '@/lib/transactions';
-import { useDebounce } from '@/hooks/use-debounce';
-import { ReceiptViewerModal } from '@/components/passbooks/ReceiptViewerModal';
-import { DeletePassbookModal } from '@/components/passbooks/DeletePassbookModal';
-import { EditPassbookModal } from '@/components/passbooks/EditPassbookModal';
 
 interface TransactionItemProps {
   item: Transaction;
@@ -1265,7 +1263,7 @@ export default function PassbookDetailScreen() {
       {renderDeleteModal()}
       {renderDateBottomSheet()}
 
-      <ReceiptViewerModal 
+      <ReceiptViewerModal
         fullReceiptUrl={fullReceiptUrl}
         setFullReceiptUrl={setFullReceiptUrl}
         isDownloading={isDownloading}
