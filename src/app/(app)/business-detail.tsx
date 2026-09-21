@@ -196,16 +196,24 @@ export default function BusinessDetailScreen() {
   const params = useLocalSearchParams();
   const { activeBusiness, setActiveBusiness } = useBusiness();
 
+  const hasConsumedParams = useRef(false);
+
   useEffect(() => {
-    if (params.id && params.name && typeof params.id === 'string' && typeof params.name === 'string') {
+    if (
+      !hasConsumedParams.current &&
+      params.id &&
+      params.name &&
+      typeof params.id === 'string' &&
+      typeof params.name === 'string'
+    ) {
       if (activeBusiness?.id !== params.id) {
         setActiveBusiness({ id: params.id, name: params.name });
-        // Clear params to prevent re-setting if we navigate away and back
-        router.setParams({ id: '', name: '' });
       }
+      hasConsumedParams.current = true;
+      // Clear params to prevent re-setting if we navigate away and back
+      router.setParams({ id: '', name: '' });
     }
   }, [params.id, params.name, activeBusiness?.id, setActiveBusiness]);
-
   const selectedBusinessId = activeBusiness?.id || '';
   const businessName = activeBusiness?.name || 'Business';
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
