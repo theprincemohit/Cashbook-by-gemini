@@ -2,7 +2,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   FlatList,
   Modal,
@@ -36,15 +35,12 @@ import { getPassbooks, type Passbook } from '@/lib/passbooks';
 interface PassbookItemProps {
   item: Passbook;
   index: number;
-  balance?: number;
-  isLoadingBalance?: boolean;
-  latestTxnDate?: string;
   onPress: (item: Passbook) => void;
   formatDate: (dateStr: string) => string;
   colors: [string, string];
 }
 
-const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDate, onPress, formatDate, colors }: PassbookItemProps) => {
+const PassbookItem = memo(({ item, index, onPress, formatDate, colors }: PassbookItemProps) => {
   const itemAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -101,24 +97,20 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDa
         </View>
 
         <View style={styles.passbookBalanceContainer}>
-          {isLoadingBalance ? (
-            <ActivityIndicator size="small" color={AppColors.accentSolid} />
-          ) : (
-            <Text
-              style={[
-                styles.passbookBalanceText,
-                isPositive
-                  ? styles.balancePositive
-                  : isNegative
-                    ? styles.balanceNegative
-                    : styles.balanceZero,
-              ]}
-            >
-              {isNegative
-                ? `- ₹${Math.abs(item.net_balance).toLocaleString('en-IN')}`
-                : `₹${item.net_balance.toLocaleString('en-IN')}`}
-            </Text>
-          )}
+          <Text
+            style={[
+              styles.passbookBalanceText,
+              isPositive
+                ? styles.balancePositive
+                : isNegative
+                  ? styles.balanceNegative
+                  : styles.balanceZero,
+            ]}
+          >
+            {isNegative
+              ? `- ₹${Math.abs(item.net_balance).toLocaleString('en-IN')}`
+              : `₹${item.net_balance.toLocaleString('en-IN')}`}
+          </Text>
         </View>
 
         <Text style={styles.passbookArrow}>›</Text>
@@ -226,9 +218,6 @@ export default function BusinessDetailScreen() {
   const [error, setError] = useState('');
   const hasFetchedInitialRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
-  const [balances, setBalances] = useState<Record<string, number>>({});
-  const [latestTxnDates, setLatestTxnDates] = useState<Record<string, string>>({});
 
   // Businesses list state
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -360,15 +349,12 @@ export default function BusinessDetailScreen() {
       <PassbookItem
         item={item}
         index={index}
-        // balance={balances[item.id]}
-        isLoadingBalance={isLoadingBalances}
-        // latestTxnDate={latestTxnDates[item.id]}
         onPress={handlePassbookPress}
         formatDate={formatDate}
         colors={colors}
       />
     );
-  }, [handlePassbookPress, formatDate, balances, isLoadingBalances]);
+  }, [handlePassbookPress, formatDate]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
