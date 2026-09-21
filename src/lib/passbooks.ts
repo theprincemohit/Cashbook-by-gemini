@@ -6,6 +6,8 @@ export interface Passbook {
   user_id: string;
   name: string;
   created_at: string;
+  net_balance: number;
+  last_transaction_date: string;
 }
 
 /**

@@ -32,7 +32,6 @@ import {
 } from '@/constants/theme';
 import { getBusinesses, type Business } from '@/lib/businesses';
 import { getPassbooks, type Passbook } from '@/lib/passbooks';
-import { getPassbookBalances } from '@/lib/transactions';
 
 interface PassbookItemProps {
   item: Passbook;
@@ -57,7 +56,7 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDa
     }).start();
   }, [itemAnim, index]);
 
-  const currentBalance = balance ?? 0;
+  const currentBalance = item.net_balance;
   const isPositive = currentBalance > 0;
   const isNegative = currentBalance < 0;
 
@@ -97,7 +96,7 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDa
             {item.name}
           </Text>
           <Text style={styles.passbookDate}>
-            {latestTxnDate ? `Updated ${formatDate(latestTxnDate)}` : `Created ${formatDate(item.created_at)}`}
+            {item.last_transaction_date ? `Updated ${formatDate(item.last_transaction_date)}` : `Created ${formatDate(item.created_at)}`}
           </Text>
         </View>
 
@@ -116,8 +115,8 @@ const PassbookItem = memo(({ item, index, balance, isLoadingBalance, latestTxnDa
               ]}
             >
               {isNegative
-                ? `- ₹${Math.abs(currentBalance).toLocaleString('en-IN')}`
-                : `₹${currentBalance.toLocaleString('en-IN')}`}
+                ? `- ₹${Math.abs(item.net_balance).toLocaleString('en-IN')}`
+                : `₹${item.net_balance.toLocaleString('en-IN')}`}
             </Text>
           )}
         </View>
@@ -273,40 +272,13 @@ export default function BusinessDetailScreen() {
       setIsLoading(true);
     }
     const result = await getPassbooks(bId);
+    console.log("result", result);
     if (result.error) {
       setError(result.error);
     } else {
       const data = result.data ?? [];
       setError('');
-      if (data.length > 0) {
-        setIsLoadingBalances(true);
-        const balancesRes = await getPassbookBalances(data.map((p) => p.id));
-        if (balancesRes.data) {
-          const map: Record<string, number> = {};
-          const datesMap: Record<string, string> = {};
-          Object.entries(balancesRes.data).forEach(([id, val]) => {
-            map[id] = val.balance;
-            if (val.latest_txn_date) {
-              datesMap[id] = val.latest_txn_date;
-            }
-          });
-          setBalances(map);
-          setLatestTxnDates(datesMap);
-
-          const sortedData = [...data].sort((a, b) => {
-            const dateA = balancesRes.data![a.id]?.latest_txn_date || a.created_at;
-            const dateB = balancesRes.data![b.id]?.latest_txn_date || b.created_at;
-            return new Date(dateB).getTime() - new Date(dateA).getTime();
-          });
-          setPassbooks(sortedData);
-        } else {
-          setPassbooks(data);
-        }
-        setIsLoadingBalances(false);
-      } else {
-        setBalances({});
-        setPassbooks(data);
-      }
+      setPassbooks(data);
     }
     setIsLoading(false);
     setIsRefreshing(false);
@@ -389,9 +361,9 @@ export default function BusinessDetailScreen() {
       <PassbookItem
         item={item}
         index={index}
-        balance={balances[item.id]}
+        // balance={balances[item.id]}
         isLoadingBalance={isLoadingBalances}
-        latestTxnDate={latestTxnDates[item.id]}
+        // latestTxnDate={latestTxnDates[item.id]}
         onPress={handlePassbookPress}
         formatDate={formatDate}
         colors={colors}
