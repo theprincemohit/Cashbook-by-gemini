@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,13 +23,13 @@ import { useBusiness } from '@/context/BusinessContext';
 
 import { Feather, Ionicons } from '@expo/vector-icons';
 
+import BottomTabBar from '@/components/BottomTabBar';
 import {
   AppBorderRadius,
   AppColors,
   AppFontSizes,
   AppSpacing,
 } from '@/constants/theme';
-import BottomTabBar from '@/components/BottomTabBar';
 import { getBusinesses, type Business } from '@/lib/businesses';
 import { getPassbooks, type Passbook } from '@/lib/passbooks';
 import { getPassbookBalances } from '@/lib/transactions';
@@ -193,7 +193,19 @@ const BusinessRowSkeleton = () => {
 };
 
 export default function BusinessDetailScreen() {
+  const params = useLocalSearchParams();
   const { activeBusiness, setActiveBusiness } = useBusiness();
+
+  useEffect(() => {
+    if (params.id && params.name && typeof params.id === 'string' && typeof params.name === 'string') {
+      if (activeBusiness?.id !== params.id) {
+        setActiveBusiness({ id: params.id, name: params.name });
+        // Clear params to prevent re-setting if we navigate away and back
+        router.setParams({ id: '', name: '' });
+      }
+    }
+  }, [params.id, params.name, activeBusiness?.id, setActiveBusiness]);
+
   const selectedBusinessId = activeBusiness?.id || '';
   const businessName = activeBusiness?.name || 'Business';
   const [passbooks, setPassbooks] = useState<Passbook[]>([]);
@@ -548,7 +560,6 @@ export default function BusinessDetailScreen() {
           <View style={styles.topBar}>
             <Pressable
               onPress={() => {
-                loadBusinessesList();
                 setBusinessBottomSheetVisible(true);
               }}
               style={({ pressed }) => [
