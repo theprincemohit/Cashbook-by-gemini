@@ -272,7 +272,6 @@ export default function BusinessDetailScreen() {
       setIsLoading(true);
     }
     const result = await getPassbooks(bId);
-    console.log("result", result);
     if (result.error) {
       setError(result.error);
     } else {
