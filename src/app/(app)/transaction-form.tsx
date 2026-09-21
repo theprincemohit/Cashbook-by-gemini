@@ -784,7 +784,7 @@ export default function TransactionFormScreen() {
                   styles.button,
                   pressed && styles.buttonPressed,
                   isSubmitting && styles.buttonDisabled,
-                  { marginTop: AppSpacing.xl },
+                  { marginTop: AppSpacing.sm },
                 ]}
               >
                 <LinearGradient
@@ -1573,7 +1573,7 @@ const styles = StyleSheet.create({
   },
   typeBtn: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     alignItems: 'center',
     borderRadius: AppBorderRadius.sm + 2,
   },
@@ -1640,9 +1640,9 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     color: AppColors.textPrimary,
-    fontSize: AppFontSizes.xl + 4,
-    fontWeight: '800',
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    fontSize: AppFontSizes.lg,
+    fontWeight: '700',
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   // Contacts
   contactsScroll: {
