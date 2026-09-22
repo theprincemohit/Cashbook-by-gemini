@@ -552,39 +552,28 @@ export default function BusinessDetailScreen() {
             },
           ]}
         >
-          {/* Top Bar with Business Dropdown */}
+          {/* Top Bar */}
           <View style={styles.topBar}>
+            {/* Left: icon + name + subtitle — tappable to open sheet */}
             <Pressable
-              onPress={() => {
-                setBusinessBottomSheetVisible(true);
-              }}
-              style={({ pressed }) => [
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: pressed ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)',
-                  paddingHorizontal: AppSpacing.md,
-                  paddingVertical: AppSpacing.xs + 2,
-                  borderRadius: AppBorderRadius.lg,
-                  borderWidth: 1,
-                  borderColor: 'rgba(255, 255, 255, 0.15)',
-                  gap: 8,
-                  maxWidth: '70%',
-                },
-              ]}
+              onPress={() => setBusinessBottomSheetVisible(true)}
+              style={styles.topBarLeft}
             >
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                <Ionicons name="business" size={16} color="#FFFFFF" />
+              {/* Building icon in rounded square */}
+              <View style={styles.topBarIcon}>
+                <Ionicons name="business" size={16} color="#9CA3AF" />
               </View>
-              <View style={{ flexShrink: 1 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: AppFontSizes.md, fontWeight: '700' }} numberOfLines={1}>
-                  {businessName.slice(0, 15) ?? 'Select Business'}
-                </Text>
-                <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 10, marginTop: 1 }}>
-                  Tap to switch Business
-                </Text>
+
+              {/* Name + chevron + subtitle */}
+              <View style={styles.topBarInfo}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.topBarName} numberOfLines={1}>
+                    {businessName.length > 15 ? businessName.slice(0, 15) + '…' : businessName}
+                  </Text>
+                  <Ionicons name="chevron-down" size={14} color="#6B7280" />
+                </View>
+                <Text style={styles.topBarSubtitle}>Tap to switch business</Text>
               </View>
-              <Text style={{ color: '#818CF8', fontSize: 12 }}>▼</Text>
             </Pressable>
           </View>
 
@@ -681,6 +670,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: AppSpacing.lg,
+    paddingTop: AppSpacing.md,
     paddingBottom: 160,
   },
   // Floating Action Button (FAB)
@@ -730,10 +720,46 @@ const styles = StyleSheet.create({
   // Top Bar
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: AppSpacing.lg,
-    marginBottom: AppSpacing.md,
+    paddingVertical: 6,
+    marginBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 4,
+  },
+  topBarIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  topBarInfo: {
+    flex: 1,
+  },
+  topBarName: {
+    color: '#FFFFFF',
+    fontSize: AppFontSizes.sm + 1,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  topBarSubtitle: {
+    color: '#6B7280',
+    fontSize: 10,
+    marginTop: 1,
+  },
+  topBarRightBtn: {
+    paddingLeft: AppSpacing.md,
+    paddingVertical: 4,
   },
 
   // Error
