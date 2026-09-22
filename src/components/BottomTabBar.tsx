@@ -5,7 +5,7 @@ import { AppColors } from '@/constants/theme';
 import { useBusiness } from '@/context/BusinessContext';
 
 interface BottomTabBarProps {
-  activeTab: 'home' | 'settings' | 'how-to-use';
+  activeTab: 'home' | 'settings';
 }
 
 export default function BottomTabBar({ activeTab }: BottomTabBarProps) {
@@ -35,16 +35,6 @@ export default function BottomTabBar({ activeTab }: BottomTabBarProps) {
       >
         <Feather name="settings" size={22} color={activeTab === 'settings' ? AppColors.accentSolid : '#94A3B8'} />
         <Text style={[styles.bottomTabLabel, activeTab === 'settings' && { color: AppColors.accentSolid }]}>Settings</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.bottomTabItem}
-        onPress={() => {
-          if (activeTab !== 'how-to-use') router.push('/(app)/how-to-use');
-        }}
-      >
-        <Feather name="help-circle" size={22} color={activeTab === 'how-to-use' ? AppColors.accentSolid : '#94A3B8'} />
-        <Text style={[styles.bottomTabLabel, activeTab === 'how-to-use' && { color: AppColors.accentSolid }]}>How to Use</Text>
       </Pressable>
     </View>
   );

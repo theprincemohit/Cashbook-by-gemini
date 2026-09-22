@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -279,7 +280,11 @@ export default function SettingsScreen() {
           <Text style={styles.headerTitle}>Settings</Text>
         </View>
 
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Business Settings</Text>
 
@@ -317,6 +322,23 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Help</Text>
+
+            <Pressable
+              style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]}
+              onPress={() => router.push('/(app)/how-to-use')}
+            >
+              <View style={styles.settingItemLeft}>
+                <View style={[styles.settingIconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                  <Feather name="help-circle" size={18} color="#818CF8" />
+                </View>
+                <Text style={styles.settingItemText}>How to Use</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="rgba(255,255,255,0.2)" />
+            </Pressable>
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Account</Text>
 
             <Pressable style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]} onPress={signOut}>
@@ -329,7 +351,7 @@ export default function SettingsScreen() {
               <Feather name="chevron-right" size={20} color="rgba(255,255,255,0.2)" />
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
         <BottomTabBar activeTab="settings" />
       </SafeAreaView>
 
@@ -417,8 +439,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    padding: AppSpacing.md,
-    borderRadius: AppBorderRadius.lg,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 10,
+    borderRadius: AppBorderRadius.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
@@ -430,15 +453,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   settingItemText: {
-    fontSize: AppFontSizes.md,
+    fontSize: AppFontSizes.sm + 1,
     color: '#FFFFFF',
     fontWeight: '500',
   },

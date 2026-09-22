@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import BottomTabBar from '@/components/BottomTabBar';
 import { AppBorderRadius, AppColors, AppFontSizes, AppSpacing } from '@/constants/theme';
 
 type Lang = 'en' | 'hi';
@@ -121,8 +121,13 @@ export default function HowToUseScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>{t.title}</Text>
-            <Text style={styles.headerSubtitle}>{t.subtitle}</Text>
+            <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
+              <Feather name="arrow-left" size={20} color="#FFFFFF" />
+            </Pressable>
+            <View>
+              <Text style={styles.headerTitle}>{t.title}</Text>
+              <Text style={styles.headerSubtitle}>{t.subtitle}</Text>
+            </View>
           </View>
 
           {/* EN / HI toggle */}
@@ -173,8 +178,6 @@ export default function HowToUseScreen() {
             <Text style={styles.tipText}>{t.tip}</Text>
           </View>
         </ScrollView>
-
-        <BottomTabBar activeTab="how-to-use" />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -194,8 +197,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     flex: 1,
     marginRight: AppSpacing.md,
+  },
+  backBtn: {
+    padding: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8,
   },
   headerTitle: {
     color: '#FFFFFF',
