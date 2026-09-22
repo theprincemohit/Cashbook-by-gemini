@@ -437,8 +437,17 @@ export default function BusinessDetailScreen() {
           onPress={() => setBusinessBottomSheetVisible(false)}
         />
         <View style={styles.sheetContent}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Select Business</Text>
+          {/* Header: × close + title + divider */}
+          <View style={styles.sheetHeader}>
+            <Pressable
+              onPress={() => setBusinessBottomSheetVisible(false)}
+              style={styles.sheetCloseBtn}
+              hitSlop={8}
+            >
+              <Ionicons name="close" size={20} color="#FFFFFF" />
+            </Pressable>
+            <Text style={styles.sheetTitle}>Select Business</Text>
+          </View>
 
           {isLoadingBusinesses ? (
             <ScrollView style={{ maxHeight: 260, marginVertical: 6 }}>
@@ -447,9 +456,16 @@ export default function BusinessDetailScreen() {
               ))}
             </ScrollView>
           ) : (
-            <ScrollView style={{ maxHeight: 260, marginVertical: 6 }}>
-              {businesses.map((b) => {
+            <ScrollView style={{ maxHeight: 260, marginVertical: 6 }} showsVerticalScrollIndicator={false} bounces={false}>
+              {[...businesses]
+                .sort((a, b) => {
+                  if (a.id === selectedBusinessId) return -1;
+                  if (b.id === selectedBusinessId) return 1;
+                  return ((b as any).passbook_count ?? 0) - ((a as any).passbook_count ?? 0);
+                })
+                .map((b) => {
                 const isChecked = b.id === selectedBusinessId;
+                const bookCount = (b as any).passbook_count ?? 0;
                 return (
                   <Pressable
                     key={b.id}
@@ -460,24 +476,37 @@ export default function BusinessDetailScreen() {
                       isChecked && styles.businessRowItemSelected,
                     ]}
                   >
-                    <View style={styles.businessRowLeft}>
-                      <View
-                        style={[
-                          styles.checkboxSquare,
-                          isChecked && styles.checkboxSquareChecked,
-                        ]}
-                      >
-                        {isChecked && <Text style={styles.checkmarkText}>✓</Text>}
-                      </View>
-                      <Text
-                        style={[
-                          styles.businessRowName,
-                          isChecked && styles.businessRowNameSelected,
-                        ]}
-                      >
+                    {/* Building icon */}
+                    <View style={[
+                      styles.bsIcon,
+                      isChecked && styles.bsIconSelected,
+                    ]}>
+                      <Ionicons
+                        name="business"
+                        size={20}
+                        color={isChecked ? AppColors.accentStart : '#6B7280'}
+                      />
+                    </View>
+
+                    {/* Name + book count */}
+                    <View style={styles.bsInfo}>
+                      <Text style={[
+                        styles.businessRowName,
+                        isChecked && styles.businessRowNameSelected,
+                      ]}>
                         {b.name}
                       </Text>
+                      <Text style={styles.bsBookCount}>
+                        {bookCount === 1 ? '1 Book' : `${bookCount} Books`}
+                      </Text>
                     </View>
+
+                    {/* Green circle checkmark for selected */}
+                    {isChecked && (
+                      <View style={styles.bsCheckCircle}>
+                        <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}
@@ -892,37 +921,83 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignSelf: 'center',
-    marginBottom: AppSpacing.md,
+  // Header: × close button + title
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: AppSpacing.md,
+    marginBottom: AppSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  sheetCloseBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   sheetTitle: {
     color: '#FFFFFF',
     fontSize: AppFontSizes.md,
     fontWeight: '700',
-    marginBottom: AppSpacing.sm,
-    textAlign: 'center',
   },
+  // Business rows
   businessRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderRadius: AppBorderRadius.md,
-    marginBottom: 4,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   businessRowItemPressed: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   businessRowItemSelected: {
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    borderColor: AppColors.accentStart,
   },
   businessRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // Building icon square
+  bsIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  bsIconSelected: {
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+  },
+  bsInfo: {
+    flex: 1,
+  },
+  bsBookCount: {
+    color: '#94A3B8',
+    fontSize: AppFontSizes.xs + 1,
+    marginTop: 1,
+  },
+  // Green circle checkmark
+  bsCheckCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#22C55E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  // Kept for TS compatibility (no longer rendered)
   checkboxSquare: {
     width: 20,
     height: 20,
@@ -944,13 +1019,12 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   businessRowName: {
-    color: '#9CA3AF',
+    color: '#E2E8F0',
     fontSize: AppFontSizes.sm + 1,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   businessRowNameSelected: {
     color: '#FFFFFF',
-    fontWeight: '700',
   },
   addBusinessBtnInSheet: {
     marginTop: 8,
