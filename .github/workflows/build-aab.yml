@@ -35,6 +35,10 @@ jobs:
           echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
           echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
+      - name: Auto-increment Version Code
+        run: |
+          node -e "const fs=require('fs'); const app=JSON.parse(fs.readFileSync('app.json')); app.expo.android = app.expo.android || {}; app.expo.android.versionCode=${{ github.run_number }}; fs.writeFileSync('app.json', JSON.stringify(app, null, 2));"
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
