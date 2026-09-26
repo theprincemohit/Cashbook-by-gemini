@@ -21,8 +21,10 @@ export default function BottomTabBar({ activeTab }: BottomTabBarProps) {
           if (activeTab !== 'home') router.push('/(app)/business-detail');
         }}
       >
-        <Feather name="book" size={22} color={activeTab === 'home' ? AppColors.accentSolid : '#94A3B8'} />
-        <Text style={[styles.bottomTabLabel, activeTab === 'home' && { color: AppColors.accentSolid }]}>CashDiary</Text>
+        <View style={[styles.tabContent, activeTab === 'home' && styles.activeTabBg]}>
+          <Feather name="book" size={22} color={activeTab === 'home' ? AppColors.accentSolid : '#94A3B8'} />
+          <Text style={[styles.bottomTabLabel, activeTab === 'home' && { color: AppColors.accentSolid }]}>CashDiary</Text>
+        </View>
       </Pressable>
 
       <Pressable
@@ -33,8 +35,10 @@ export default function BottomTabBar({ activeTab }: BottomTabBarProps) {
           }
         }}
       >
-        <Feather name="settings" size={22} color={activeTab === 'settings' ? AppColors.accentSolid : '#94A3B8'} />
-        <Text style={[styles.bottomTabLabel, activeTab === 'settings' && { color: AppColors.accentSolid }]}>Settings</Text>
+        <View style={[styles.tabContent, activeTab === 'settings' && styles.activeTabBg]}>
+          <Feather name="settings" size={22} color={activeTab === 'settings' ? AppColors.accentSolid : '#94A3B8'} />
+          <Text style={[styles.bottomTabLabel, activeTab === 'settings' && { color: AppColors.accentSolid }]}>Settings</Text>
+        </View>
       </Pressable>
     </View>
   );
@@ -61,6 +65,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     height: '100%',
+  },
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 28,
+    borderRadius: 30,
+  },
+  activeTabBg: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
   },
   bottomTabLabel: {
     fontSize: 10,
