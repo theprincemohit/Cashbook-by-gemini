@@ -47,7 +47,7 @@ jobs:
 
       - name: Build Release Bundle
         env:
-          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_FILE: release.keystore
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_FILE: ${{ secrets.KEYSTOREPATH }}
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.KEYALIAS }}
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.KEYPASSWORD }}
