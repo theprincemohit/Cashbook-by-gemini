@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: Prod
+    environment: cashDiary android app
 
     steps:
       - name: Checkout repository
